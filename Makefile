@@ -1,7 +1,7 @@
 OUT = assa
 
 CC = gcc
-CFLAGS = -std=gnu90 -g3 -O3 -Wall
+CFLAGS = -m32 -std=gnu90 -g3 -O3 -Wall
 
 SRC = assa.c
 
