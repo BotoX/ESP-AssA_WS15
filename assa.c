@@ -2,6 +2,7 @@
 // assa.c
 //
 // Brainfuck interpreter
+// Compile with -O3 or christmas won't happen this year
 //
 //-----------------------------------------------------------------------------
 //
@@ -18,6 +19,222 @@
 		fprintf(/*stderr*/stdout, "[ERR] " fmt, ##__VA_ARGS__); \
 		exit(error); \
 	} while(0)
+
+// Data Types
+typedef struct
+{
+	uint32_t *pData;
+	size_t Size;
+	size_t AllocSize;
+} CStack;
+
+typedef struct
+{
+	uint32_t Position;
+	char *pProgram;
+	size_t ProgramSize;
+
+	uint32_t *pJumpTable;
+
+	uint32_t *pBreakPoints;
+	size_t BreakPointsSize;
+	char *pBreakPointsBackup;
+
+	unsigned char *pDataStart;
+	unsigned char *pData;
+	size_t DataSize;
+	size_t DataAllocSize;
+} CBrainfuckContext;
+
+typedef int (*pfnCommand)(CBrainfuckContext *pContext, int argc, char *argv[]);
+typedef struct
+{
+	const char *pCmd;
+	pfnCommand pfnCmd;
+} CCommand;
+
+// Function prototypes
+//-----------------------------------------------------------------------------
+///
+/// Allocate or grow memory for a stack.
+///
+/// @param pStack Pointer to CStack object.
+/// @param Size Size to allocate.
+///
+/// @return void
+//
+void Stack_Alloc(CStack *pStack, size_t Size);
+
+//-----------------------------------------------------------------------------
+///
+/// Create a new stack.
+///
+/// @param pStack Pointer to CStack object.
+/// @param StartSize Size to initially allocate.
+///
+/// @return void
+//
+void Stack_Init(CStack *pStack, size_t StartSize);
+
+//-----------------------------------------------------------------------------
+///
+/// Destroy a given stack.
+///
+/// @param pStack Pointer to CStack object.
+///
+/// @return void
+//
+void Stack_Destroy(CStack *pStack);
+
+//-----------------------------------------------------------------------------
+///
+/// Push Element onto stack.
+///
+/// @param pStack Pointer to CStack object.
+/// @param Element Element to push onto stack.
+///
+/// @return void
+//
+void Stack_Push(CStack *pStack, uint32_t Element);
+
+//-----------------------------------------------------------------------------
+///
+/// Pop Element from stack.
+///
+/// @param pStack Pointer to CStack object.
+///
+/// @return The Element pop'd or UINT32_MAX if the stack is empty.
+//
+uint32_t Stack_Pop(CStack *pStack);
+
+int CMD_load(CBrainfuckContext *pContext, int argc, char *argv[]);
+int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[]);
+int CMD_eval(CBrainfuckContext *pContext, int argc, char *argv[]);
+int CMD_break(CBrainfuckContext *pContext, int argc, char *argv[]);
+int CMD_step(CBrainfuckContext *pContext, int argc, char *argv[]);
+int CMD_memory(CBrainfuckContext *pContext, int argc, char *argv[]);
+int CMD_show(CBrainfuckContext *pContext, int argc, char *argv[]);
+int CMD_change(CBrainfuckContext *pContext, int argc, char *argv[]);
+int CMD_quit(CBrainfuckContext *pContext, int argc, char *argv[]);
+
+//-----------------------------------------------------------------------------
+///
+/// Parses and executes a command line command.
+///
+/// @param pContext Pointer to CBrainfuckContext object.
+/// @param pCommand Pointer to first CCommand object in a null-terminated array.
+/// @param pLine String to evaluate.
+///
+/// @return Returnvale of executed command or -1 if none is found.
+//
+int CommandLine(CBrainfuckContext *pContext, CCommand *pCommand, char *pLine);
+
+//-----------------------------------------------------------------------------
+///
+/// Loads a file into memory and filters invalid characters from it.
+///
+/// @param pFilename Path of the file.
+/// @param ppProgram Pointer to string which will hold the result.
+///
+/// @return Length of ppProgram.
+//
+size_t LoadProgram(const char *pFilename, char **ppProgram);
+
+//-----------------------------------------------------------------------------
+///
+/// Initializes a new CBrainfuckContext object.
+///
+/// @param pContext Pointer to CBrainfuckContext object.
+/// @param pProgram Brainfuck program string.
+/// @param pJumpTable Brainfuck program jumptable.
+///
+/// @return void
+//
+void BrainfuckContext_Init(CBrainfuckContext *pContext, char *pProgram, uint32_t *pJumpTable);
+
+#ifdef BONUS
+//-----------------------------------------------------------------------------
+///
+/// Segmentation fault signal handler.
+///
+/// @param Signal Signal that invoked us (always SIGSEGV or not SIGSEGV for init).
+/// @param pSignal Pointer to siginfo_t object.
+/// @param pArg Pointer to unkown object. On Linux ucontext_t.
+///
+/// @return void
+//
+void SIGSEGV_Handler(int Signal, siginfo_t *pSignal, void *pArg);
+//-----------------------------------------------------------------------------
+///
+/// "Compiles" Brainfuck code into optimized x86 machine code.
+/// Breakpoint Idea (doesn't make sense with current optimizing code)
+/// not implemented but should work™
+///
+/// mov  breakpoint-num, eax
+/// mov  [esp], ebx
+/// call  ebx
+///
+/// Look at return code (eax)
+/// 0 = program exited normaly, no breakpoint occured.
+/// >0 = above assembler has been executed, read on.
+///
+/// Jumps to instruction after brainfuck code invocation ((int(*)())pBinary)();
+/// Pop stack once to get EIP (instruction pointer) of next instruction
+/// where program returned because of a breakpoint.
+/// Pop stack second time to get rid of previous EIP on stack.
+/// Can use first pop'd EIP to jump back into brainfuck program afterwards.
+///
+/// @param pBuf Brainfuck program.
+/// @param Length Length of pBuf.
+/// @param pProgramAllocSize Pointer to variable which will hold the size of
+///							 the compiled program.
+///
+/// @return Pointer to compiled program.
+//
+unsigned char *JITCompileBrainfuck(char *pBuf, size_t Length, size_t *pProgramAllocSize);
+#endif
+
+//-----------------------------------------------------------------------------
+///
+/// Builds (precomputes) jump table for brainfuck program.
+///
+/// O(1) implementation
+/// This would be a lot more memory efficient by using something like a Y-fast trie
+/// https://en.wikipedia.org/wiki/Y-fast_trie
+/// (which'd be wayyyy too much effort for me to implement for this assignment - or at all)
+/// so basically use this great library: http://www.nedprod.com/programs/portable/nedtries/
+/// in case of hanoi.bf this will use about 218k memory
+///
+/// @param pBuf Brainfuck program.
+/// @param Length Length of pBuf.
+/// @param ppJumpTable Pointer to JumpTable which will hold the result.
+///
+/// @return void
+//
+void BuildJumpTable(char *pBuf, size_t Length, uint32_t **ppJumpTable);
+
+//-----------------------------------------------------------------------------
+///
+/// Runs a given CBrainfuckContext object.
+///
+/// @param pContext Pointer to CBrainfuckContext object.
+///
+/// @return Position of the instruction pointer.
+//
+uint32_t RunBrainfuck(CBrainfuckContext *pContext);
+
+//------------------------------------------------------------------------------
+///
+/// The main program.
+/// Provides functionality as described by:
+/// https://palme.iicm.tugraz.at/wiki/ESP/AssA_WS15
+///
+/// @param argc 1 for interactive mode or >3 for execution mode "-e filename".
+/// @param argv arguments
+///
+/// @return non-zero on failure
+//
+int main(int argc, char *argv[]);
 
 // Uncomment for bonus
 //#define BONUS
@@ -79,13 +296,6 @@
 
 
 /* CStack */
-typedef struct
-{
-	size_t *pData;
-	size_t Size;
-	size_t AllocSize;
-} CStack;
-
 void Stack_Alloc(CStack *pStack, size_t Size)
 {
 	if(pStack->AllocSize == 0)
@@ -123,21 +333,12 @@ void Stack_Destroy(CStack *pStack)
 	free(pStack->pData);
 }
 
-uint32_t Stack_Top(CStack *pStack)
-{
-	if(pStack->Size == 0)
-		return UINT32_MAX;
-
-	return pStack->pData[pStack->Size - 1];
-}
-
-uint32_t Stack_Push(CStack *pStack, uint32_t Element)
+void Stack_Push(CStack *pStack, uint32_t Element)
 {
 	if(pStack->Size >= pStack->AllocSize)
 		Stack_Alloc(pStack, 32);
 
 	pStack->pData[pStack->Size++] = Element;
-	return Element;
 }
 
 uint32_t Stack_Pop(CStack *pStack)
@@ -149,281 +350,7 @@ uint32_t Stack_Pop(CStack *pStack)
 }
 /* CStack */
 
-
-size_t LoadProgram(const char *pFilename, char **ppProgram)
-{
-	char *pFileData;
-	FILE *pFile;
-	pFile = fopen(pFilename, "rb");
-	if(!pFile)
-		ERROR(4, "reading the file failed\n");
-
-	size_t FileSize;
-	fseek(pFile, 0, SEEK_END);
-	FileSize = ftell(pFile);
-	fseek(pFile, 0, SEEK_SET);
-
-	pFileData = malloc(FileSize + 1);
-	if(!pFileData)
-		ERROR(2, "out of memory\n");
-
-	fread(pFileData, 1, FileSize, pFile),
-	fclose(pFile);
-
-	// Assure null-termination
-	pFileData[FileSize] = 0;
-
-	// Count valid brainfuck characters
-	size_t RealLength = 0;
-	size_t i;
-	for(i = 0; i < FileSize; i++)
-	{
-		switch(pFileData[i])
-		{
-			case '>':
-			case '<':
-			case '+':
-			case '-':
-			case '.':
-			case ',':
-			case '[':
-			case ']':
-			{
-				RealLength++;
-			} break;
-		}
-	}
-
-	// Allocate memory for the filtered code
-	char *pProgram = malloc(RealLength + 1);
-	if(!pProgram)
-		ERROR(2, "out of memory\n");
-
-	// And copy only the valid characters
-	size_t j;
-	for(i = 0, j = 0; i < FileSize; i++)
-	{
-		switch(pFileData[i])
-		{
-			case '>':
-			case '<':
-			case '+':
-			case '-':
-			case '.':
-			case ',':
-			case '[':
-			case ']':
-			{
-				pProgram[j++] = pFileData[i];
-			} break;
-		}
-	}
-
-	// Assure null-termination
-	pProgram[RealLength] = 0;
-
-	free(pFileData);
-
-	*ppProgram = pProgram;
-
-	return RealLength;
-}
-
-// O(1) '[...]' implementation
-// This would be a lot more memory efficient by using something like a Y-fast trie
-// https://en.wikipedia.org/wiki/Y-fast_trie
-// (which'd be wayyyy too much effort for me to implement for this assignment)
-// or this great library: http://www.nedprod.com/programs/portable/nedtries/
-// in case of hanoi.bf it'll use about 218k memory
-int BuildJumpTable(char *pBuf, size_t Length, uint32_t **ppJumpTable)
-{
-	CStack Stack;
-	CStack *pStack = &Stack;
-	Stack_Init(pStack, 32);
-
-	size_t OpenBracketSize = 0;
-	size_t ClosedBracketSize = 0;
-	size_t LastBracket = 0;
-
-	// Count '[' and ']' in the program
-	// Also remember the last ']' to make memory usage a bit better
-	size_t i;
-	for(i = 0; i < Length; i++)
-	{
-		switch(pBuf[i])
-		{
-			case '[':
-			{
-				OpenBracketSize++;
-			} break;
-			case ']':
-			{
-				ClosedBracketSize++;
-				LastBracket = i;
-			} break;
-		}
-	}
-	LastBracket++;
-
-	if(OpenBracketSize != ClosedBracketSize)
-		ERROR(3, "parsing of input failed\n");
-
-	uint32_t *pJumpTable = malloc(LastBracket * sizeof(uint32_t));
-	if(!pJumpTable)
-		ERROR(2, "out of memory\n");
-
-	memset(pJumpTable, 0, LastBracket * sizeof(uint32_t));
-
-	for(i = 0; i < Length; i++)
-	{
-		switch(pBuf[i])
-		{
-			case '[':
-			{
-				// Push position of '[' onto stack
-				// This will be pop'd later at the corresponding ']'
-				Stack_Push(pStack, i);
-			} break;
-			case ']':
-			{
-				uint32_t Jump = Stack_Pop(pStack);
-
-				// '[' jumps to previously push'd ']' position
-				pJumpTable[i] = Jump;
-				// previously push'd '[' jumps to this ']'
-				pJumpTable[Jump] = i;
-			} break;
-		}
-	}
-
-	Stack_Destroy(pStack);
-
-	*ppJumpTable = pJumpTable;
-
-	return 0;
-}
-
-typedef struct
-{
-	uint32_t Position;
-	char *pProgram;
-	size_t ProgramSize;
-
-	uint32_t *pJumpTable;
-
-	uint32_t *pBreakPoints;
-	size_t BreakPointSize;
-	char *pBreakPointBackups;
-
-	unsigned char *pDataStart;
-	unsigned char *pData;
-
-	size_t DataSize;
-	size_t DataAllocSize;
-} CBrainfuckContext;
-
-void BrainfuckContext_Init(CBrainfuckContext *pContext, char *pProgram, uint32_t *pJumpTable)
-{
-	memset(pContext, 0, sizeof(CBrainfuckContext));
-	pContext->DataAllocSize = 1024;
-	pContext->pProgram = pProgram;
-	pContext->pJumpTable = pJumpTable;
-	pContext->pBreakPoints = 0;
-	pContext->BreakPointSize = 0;
-	pContext->pBreakPointBackups = 0;
-
-	pContext->pDataStart = malloc(pContext->DataAllocSize);
-	pContext->DataSize = pContext->DataAllocSize;
-	pContext->pData = pContext->pDataStart;
-	memset(pContext->pData, 0, pContext->DataSize);
-
-	if(!pContext->pData)
-		ERROR(2, "out of memory\n");
-}
-
-uint32_t RunBrainfuck(CBrainfuckContext *pContext)
-{
-	// gcc can't into optimizing >_>
-	register uint32_t Position = pContext->Position;
-	register const char *pProgram = pContext->pProgram;
-	unsigned char *pDataStart = pContext->pDataStart;
-	register unsigned char *pData = pContext->pData;
-	unsigned char *pDataEnd = pDataStart + pContext->DataSize;
-	uint32_t *pJumpTable = pContext->pJumpTable;
-
-	for(;; Position++)
-	{
-		switch(pProgram[Position])
-		{
-			case '>':
-			{
-				pData++;
-
-				// Boundary overflow check
-				if(pData >= pDataEnd)
-				{
-					pContext->DataSize += pContext->DataAllocSize;
-					void *pAlloc = realloc(pDataStart, pContext->DataSize);
-					if(!pAlloc)
-						ERROR(2, "out of memory\n");
-
-					pData = pAlloc + (pData - pDataStart);
-					pDataStart = pAlloc;
-					pDataEnd = pDataStart + pContext->DataSize;
-					memset(pData, 0, pDataEnd - pData);
-				}
-			} break;
-			case '<':
-			{
-				pData--;
-				// Underflow not documented, therefore not implemented
-			} break;
-			case '+':
-			{
-				(*pData)++;
-			} break;
-			case '-':
-			{
-				(*pData)--;
-			} break;
-			case '.':
-			{
-				putchar(*pData);
-			} break;
-			case ',':
-			{
-				*pData = getchar();
-			} break;
-			case '[':
-			{
-				if(!*pData)
-					Position = pJumpTable[Position];
-			} break;
-			case ']':
-			{
-				if(*pData)
-					Position = pJumpTable[Position];
-			} break;
-			default:
-			{
-				pContext->Position = Position;
-				pContext->pDataStart = pDataStart;
-				pContext->pData = pData;
-
-				return Position;
-			} break;
-		}
-	}
-}
-
 /* Console */
-typedef int (*pfnCommand)(CBrainfuckContext *pContext, int argc, char *argv[]);
-typedef struct
-{
-	const char *pCmd;
-	pfnCommand pfnCmd;
-} CCommand;
-
 int CMD_load(CBrainfuckContext *pContext, int argc, char *argv[])
 {
 	if(argc < 2)
@@ -448,10 +375,10 @@ int CMD_load(CBrainfuckContext *pContext, int argc, char *argv[])
 			free(pContext->pBreakPoints);
 			pContext->pBreakPoints = 0;
 
-			if(pContext->pBreakPointBackups)
+			if(pContext->pBreakPointsBackup)
 			{
-				free(pContext->pBreakPointBackups);
-				pContext->pBreakPointBackups = 0;
+				free(pContext->pBreakPointsBackup);
+				pContext->pBreakPointsBackup = 0;
 			}
 		}
 	}
@@ -471,9 +398,9 @@ int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[])
 	}
 
 	// Already ran once, cleanup first
-	// If pBreakPointBackups is set then we've previously stopped at a breakpoint ...
+	// If pBreakPointsBackup is set then we've previously stopped at a breakpoint ...
 	// ... which means that we *don't* want to reset data when re-'run'ing
-	if(pContext->Position && !pContext->pBreakPointBackups)
+	if(pContext->Position && !pContext->pBreakPointsBackup)
 	{
 		pContext->Position = 0;
 		memset(pContext->pDataStart, 0, pContext->DataSize);
@@ -483,14 +410,14 @@ int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[])
 	if(pContext->pBreakPoints)
 	{
 		size_t i;
-		if(!pContext->pBreakPointBackups)
+		if(!pContext->pBreakPointsBackup)
 		{
 			// Create array for storing original instructions
-			pContext->pBreakPointBackups = malloc(pContext->BreakPointSize);
-			if(!pContext->pBreakPointBackups)
+			pContext->pBreakPointsBackup = malloc(pContext->BreakPointsSize);
+			if(!pContext->pBreakPointsBackup)
 				ERROR(2, "out of memory\n");
 
-			for(i = 0; i < pContext->BreakPointSize; i++)
+			for(i = 0; i < pContext->BreakPointsSize; i++)
 			{
 				// Ignore breakpoints which have already been passed
 				if(!pContext->pBreakPoints[i])
@@ -500,7 +427,7 @@ int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[])
 				uint32_t Position = pContext->pBreakPoints[i];
 
 				// Save original instruction ...
-				pContext->pBreakPointBackups[i] = pContext->pProgram[Position];
+				pContext->pBreakPointsBackup[i] = pContext->pProgram[Position];
 				// ... and overwrite with 0, causing RunBrainfuck to return at <Position>
 				pContext->pProgram[Position] = 0;
 			}
@@ -512,29 +439,29 @@ int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[])
 		if(ReturnCode == pContext->ProgramSize)
 		{
 			// Restore original program (in case we didn't hit a breakpoint we've set)
-			for(i = 0; i < pContext->BreakPointSize; i++)
+			for(i = 0; i < pContext->BreakPointsSize; i++)
 			{
 				if(!pContext->pBreakPoints[i])
 					continue;
 
 				uint32_t Position = pContext->pBreakPoints[i];
 
-				pContext->pProgram[Position] = pContext->pBreakPointBackups[i];
+				pContext->pProgram[Position] = pContext->pBreakPointsBackup[i];
 			}
 
 			// Don't need this anymore
 			free(pContext->pBreakPoints);
 			pContext->pBreakPoints = 0;
 
-			free(pContext->pBreakPointBackups);
-			pContext->pBreakPointBackups = 0;
+			free(pContext->pBreakPointsBackup);
+			pContext->pBreakPointsBackup = 0;
 
 			return 0;
 		}
 
 		// Stopped at breakpoint
 		uint32_t BreakPoint = 0;
-		for(i = 0; i < pContext->BreakPointSize; i++)
+		for(i = 0; i < pContext->BreakPointsSize; i++)
 		{
 			// Find the pBreakPoints array index which made our program return ...
 			if(pContext->pBreakPoints[i] == ReturnCode)
@@ -545,7 +472,7 @@ int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[])
 		}
 
 		// ... and restore the original instruction
-		pContext->pProgram[ReturnCode] = pContext->pBreakPointBackups[BreakPoint];
+		pContext->pProgram[ReturnCode] = pContext->pBreakPointsBackup[BreakPoint];
 		// Delete breakpoint so we don't use it again
 		pContext->pBreakPoints[BreakPoint] = 0;
 	}
@@ -591,19 +518,6 @@ int CMD_eval(CBrainfuckContext *pContext, int argc, char *argv[])
 	return 0;
 }
 
-int uint32_t_compare(const void *pL, const void *pR)
-{
-	uint32_t L = *(uint32_t *)pL;
-	uint32_t R = *(uint32_t *)pR;
-
-	if(L < R)
-		return -1;
-	else if(L > R)
-		return 1;
-	else
-		return 0;
-}
-
 int CMD_break(CBrainfuckContext *pContext, int argc, char *argv[])
 {
 	if(!pContext->pProgram)
@@ -625,8 +539,8 @@ int CMD_break(CBrainfuckContext *pContext, int argc, char *argv[])
 	uint32_t BreakPoint = Temp;
 	if(!pContext->pBreakPoints)
 	{
-		pContext->BreakPointSize = 1;
-		pContext->pBreakPoints = malloc(pContext->BreakPointSize * sizeof(uint32_t));
+		pContext->BreakPointsSize = 1;
+		pContext->pBreakPoints = malloc(pContext->BreakPointsSize * sizeof(uint32_t));
 		if(!pContext->pBreakPoints)
 			ERROR(2, "out of memory\n");
 	}
@@ -634,40 +548,40 @@ int CMD_break(CBrainfuckContext *pContext, int argc, char *argv[])
 	{
 		// Avoid duplicate breakpoints
 		size_t i;
-		for(i = 0; i < pContext->BreakPointSize; i++)
+		for(i = 0; i < pContext->BreakPointsSize; i++)
 		{
 			if(pContext->pBreakPoints[i] == BreakPoint)
 				return 1;
 		}
 
-		if(pContext->pBreakPointBackups)
+		if(pContext->pBreakPointsBackup)
 		{
 			// Restore original program first
-			for(i = 0; i < pContext->BreakPointSize; i++)
+			for(i = 0; i < pContext->BreakPointsSize; i++)
 			{
 				if(!pContext->pBreakPoints[i])
 					continue;
 
 				uint32_t Position = pContext->pBreakPoints[i];
 
-				pContext->pProgram[Position] = pContext->pBreakPointBackups[i];
+				pContext->pProgram[Position] = pContext->pBreakPointsBackup[i];
 			}
 
-			// reset pBreakPointBackups so CMD_run builds it again and etc.
-			free(pContext->pBreakPointBackups);
-			pContext->pBreakPointBackups = 0;
+			// reset pBreakPointsBackup so CMD_run builds it again and etc.
+			free(pContext->pBreakPointsBackup);
+			pContext->pBreakPointsBackup = 0;
 		}
 
 		// Allocate memory for new breakpoint
-		pContext->BreakPointSize += 1;
-		void *pAlloc = realloc(pContext->pBreakPoints, pContext->BreakPointSize * sizeof(uint32_t));
+		pContext->BreakPointsSize += 1;
+		void *pAlloc = realloc(pContext->pBreakPoints, pContext->BreakPointsSize * sizeof(uint32_t));
 		if(!pAlloc)
 			ERROR(2, "out of memory\n");
 
 		pContext->pBreakPoints = pAlloc;
 	}
 
-	pContext->pBreakPoints[pContext->BreakPointSize - 1] = BreakPoint;
+	pContext->pBreakPoints[pContext->BreakPointsSize - 1] = BreakPoint;
 
 	return 0;
 }
@@ -775,7 +689,7 @@ int CMD_memory(CBrainfuckContext *pContext, int argc, char *argv[])
 			size_t i;
 			for(i = 128; i > 0; i >>= 1)
 				*(pBuf++) = ((*pData & i) == i) ? '1' : '0';
-			pBuf = 0;
+			*pBuf = 0;
 
 			printf("Binary at %d: %s\n", Position, aBuf);
 		} break;
@@ -856,39 +770,38 @@ int CommandLine(CBrainfuckContext *pContext, CCommand *pCommand, char *pLine)
 {
 	char *apArgv[16] = {0};
 	int Argc = 0;
-	char *pStr = pLine;
 	char Found = 1;
 	char InString = 0;
 
-	while(*pStr)
+	while(*pLine)
 	{
-		if(*pStr == '"' && *(pStr - 1) != '\\')
+		if(*pLine == '"' && *(pLine - 1) != '\\')
 		{
-			*pStr = 0;
+			*pLine = 0;
 			InString ^= 1;
 			if(InString)
 			{
-				pStr++;
+				pLine++;
 				Found = 1;
 			}
 		}
 
-		if((*pStr == ' ' || *pStr == '\t') && !InString)
+		if((*pLine == ' ' || *pLine == '\t') && !InString)
 		{
-			*pStr = 0;
+			*pLine = 0;
 			Found = 1;
 		}
 		else if(Found)
 		{
 			if(Argc < sizeof(apArgv)/sizeof(*apArgv))
 			{
-				apArgv[Argc++] = pStr;
+				apArgv[Argc++] = pLine;
 				Found = 0;
 			}
 			else // ignore additional parameters
 				break;
 		}
-		pStr++;
+		pLine++;
 	}
 
 	if(Argc)
@@ -905,6 +818,104 @@ int CommandLine(CBrainfuckContext *pContext, CCommand *pCommand, char *pLine)
 	return -1;
 }
 /* Console */
+
+size_t LoadProgram(const char *pFilename, char **ppProgram)
+{
+	char *pFileData;
+	FILE *pFile;
+	pFile = fopen(pFilename, "rb");
+	if(!pFile)
+		ERROR(4, "reading the file failed\n");
+
+	size_t FileSize;
+	fseek(pFile, 0, SEEK_END);
+	FileSize = ftell(pFile);
+	fseek(pFile, 0, SEEK_SET);
+
+	pFileData = malloc(FileSize + 1);
+	if(!pFileData)
+		ERROR(2, "out of memory\n");
+
+	fread(pFileData, 1, FileSize, pFile),
+	fclose(pFile);
+
+	// Assure null-termination
+	pFileData[FileSize] = 0;
+
+	// Count valid brainfuck characters
+	size_t RealLength = 0;
+	size_t i;
+	for(i = 0; i < FileSize; i++)
+	{
+		switch(pFileData[i])
+		{
+			case '>':
+			case '<':
+			case '+':
+			case '-':
+			case '.':
+			case ',':
+			case '[':
+			case ']':
+			{
+				RealLength++;
+			} break;
+		}
+	}
+
+	// Allocate memory for the filtered code
+	char *pProgram = malloc(RealLength + 1);
+	if(!pProgram)
+		ERROR(2, "out of memory\n");
+
+	// And copy only the valid characters
+	size_t j;
+	for(i = 0, j = 0; i < FileSize; i++)
+	{
+		switch(pFileData[i])
+		{
+			case '>':
+			case '<':
+			case '+':
+			case '-':
+			case '.':
+			case ',':
+			case '[':
+			case ']':
+			{
+				pProgram[j++] = pFileData[i];
+			} break;
+		}
+	}
+
+	// Assure null-termination
+	pProgram[RealLength] = 0;
+
+	free(pFileData);
+
+	*ppProgram = pProgram;
+
+	return RealLength;
+}
+
+void BrainfuckContext_Init(CBrainfuckContext *pContext, char *pProgram, uint32_t *pJumpTable)
+{
+	memset(pContext, 0, sizeof(CBrainfuckContext));
+	pContext->DataAllocSize = 1024;
+	pContext->pProgram = pProgram;
+	pContext->pJumpTable = pJumpTable;
+	pContext->pBreakPoints = 0;
+	pContext->BreakPointsSize = 0;
+	pContext->pBreakPointsBackup = 0;
+
+	pContext->pDataStart = malloc(pContext->DataAllocSize);
+	pContext->DataSize = pContext->DataAllocSize;
+	pContext->pData = pContext->pDataStart;
+	memset(pContext->pData, 0, pContext->DataSize);
+
+	if(!pContext->pData)
+		ERROR(2, "out of memory\n");
+}
 
 #ifdef BONUS
 unsigned char *JITCompileBrainfuck(char *pBuf, size_t Length, size_t *pProgramAllocSize)
@@ -1099,21 +1110,148 @@ unsigned char *JITCompileBrainfuck(char *pBuf, size_t Length, size_t *pProgramAl
 
 	return pProgram;
 }
-/*
-Breakpoint Idee: (RIP wegen optimizing)
-mov breakpoint-num, eax
-mov [esp], ebx
-call ebx
-
-Springt zu nach dem brainfuck code aufruf.
-((int(*)())pProgram)();
-2 x stack pop'n für 2 instruction pointer
-
-return code anschauen:
-0 normal
-> 0 id vom breakpoint
-*/
 #endif
+
+void BuildJumpTable(char *pBuf, size_t Length, uint32_t **ppJumpTable)
+{
+	CStack Stack;
+	CStack *pStack = &Stack;
+	Stack_Init(pStack, 32);
+
+	size_t OpenBracketSize = 0;
+	size_t ClosedBracketSize = 0;
+	size_t LastBracket = 0;
+
+	// Count '[' and ']' in the program
+	// Also remember the last ']' to make memory usage a bit better
+	size_t i;
+	for(i = 0; i < Length; i++)
+	{
+		switch(pBuf[i])
+		{
+			case '[':
+			{
+				OpenBracketSize++;
+			} break;
+			case ']':
+			{
+				ClosedBracketSize++;
+				LastBracket = i;
+			} break;
+		}
+	}
+	LastBracket++;
+
+	if(OpenBracketSize != ClosedBracketSize)
+		ERROR(3, "parsing of input failed\n");
+
+	uint32_t *pJumpTable = malloc(LastBracket * sizeof(uint32_t));
+	if(!pJumpTable)
+		ERROR(2, "out of memory\n");
+
+	memset(pJumpTable, 0, LastBracket * sizeof(uint32_t));
+
+	for(i = 0; i < Length; i++)
+	{
+		switch(pBuf[i])
+		{
+			case '[':
+			{
+				// Push position of '[' onto stack
+				// This will be pop'd later at the corresponding ']'
+				Stack_Push(pStack, i);
+			} break;
+			case ']':
+			{
+				uint32_t Jump = Stack_Pop(pStack);
+
+				// '[' jumps to previously push'd ']' position
+				pJumpTable[i] = Jump;
+				// previously push'd '[' jumps to this ']'
+				pJumpTable[Jump] = i;
+			} break;
+		}
+	}
+
+	Stack_Destroy(pStack);
+
+	*ppJumpTable = pJumpTable;
+}
+
+uint32_t RunBrainfuck(CBrainfuckContext *pContext)
+{
+	// gcc can't into optimizing >_>
+	register uint32_t Position = pContext->Position;
+	register const char *pProgram = pContext->pProgram;
+	unsigned char *pDataStart = pContext->pDataStart;
+	register unsigned char *pData = pContext->pData;
+	unsigned char *pDataEnd = pDataStart + pContext->DataSize;
+	uint32_t *pJumpTable = pContext->pJumpTable;
+
+	for(;; Position++)
+	{
+		switch(pProgram[Position])
+		{
+			case '>':
+			{
+				pData++;
+
+				// Boundary overflow check
+				if(pData >= pDataEnd)
+				{
+					pContext->DataSize += pContext->DataAllocSize;
+					void *pAlloc = realloc(pDataStart, pContext->DataSize);
+					if(!pAlloc)
+						ERROR(2, "out of memory\n");
+
+					pData = pAlloc + (pData - pDataStart);
+					pDataStart = pAlloc;
+					pDataEnd = pDataStart + pContext->DataSize;
+					memset(pData, 0, pDataEnd - pData);
+				}
+			} break;
+			case '<':
+			{
+				pData--;
+				// Underflow not documented, therefore not implemented
+			} break;
+			case '+':
+			{
+				(*pData)++;
+			} break;
+			case '-':
+			{
+				(*pData)--;
+			} break;
+			case '.':
+			{
+				putchar(*pData);
+			} break;
+			case ',':
+			{
+				*pData = getchar();
+			} break;
+			case '[':
+			{
+				if(!*pData)
+					Position = pJumpTable[Position];
+			} break;
+			case ']':
+			{
+				if(*pData)
+					Position = pJumpTable[Position];
+			} break;
+			default:
+			{
+				pContext->Position = Position;
+				pContext->pDataStart = pDataStart;
+				pContext->pData = pData;
+
+				return Position;
+			} break;
+		}
+	}
+}
 
 int main(int argc, char *argv[])
 {
