@@ -28,49 +28,52 @@
 	#define MEMPAGEMASK ~(MEMPAGESIZE - 1)
 
 	#include <signal.h>
-	// 3hard5me, this runs in kernel context, can't access registers in brainfuck machinecode
-	// need to switch context into old execution path - too much work
+	#include <ucontext.h>
+
 	static void SIGSEGV_Handler(int Signal, siginfo_t *pSignal, void *pArg)
 	{
-		unsigned char *pData;
-		// mov  [ebp+pData], edx ; Get data pointer
-		// ^ intel syntax
-		// v gas syntax
-		asm("mov %%edx, %[pData]"
-				: [pData] "=r" (pData) :: "edx");
-
 		// Hack to avoid global vars
 		static unsigned char **ppDataStart = 0;
 		static size_t *pDataAllocSize = 0;
 		if(Signal != SIGSEGV)
 		{
 			ppDataStart = (unsigned char **)pSignal;
-			pDataAllocSize =  (size_t *)pArg;
+			pDataAllocSize = (size_t *)pArg;
 			return;
 		}
 
-		printf("pData: %p\n", pData);
+		// previous execution context
+		ucontext_t *pContext = pArg;
+
+		// edx register from crashed execution context is the current pData pointer
+		unsigned char *pData = (unsigned char *)pContext->uc_mcontext.gregs[REG_EDX];
+
+		// calc offset using pDataStart
 		size_t DataOffset = pData - *ppDataStart;
 
-		ucontext_t *pContext = pArg;
-		printf("Got SIGSEGV at address: 0x%lx | DataOffset: %u\n", (long)pSignal->si_addr, DataOffset);
-
-		exit(1);
-
+		// reset locked memory page protection
 		mprotect(*ppDataStart, *pDataAllocSize + MEMPAGESIZE, PROT_READ | PROT_WRITE);
-		*pDataAllocSize += MEMPAGESIZE;
+
+		// allocate another memory page for data
 		void *pAlloc = mremap(*ppDataStart, *pDataAllocSize, *pDataAllocSize + MEMPAGESIZE, MREMAP_MAYMOVE);
 		if(pAlloc == MAP_FAILED) // this could be anything, need to check errno...
 			ERROR(2, "out of memory\n");
 
+		// fix variables in main
+		*pDataAllocSize += MEMPAGESIZE;
 		*ppDataStart = pAlloc;
 
+		// lock next memory page again so we can catch the next invalid memory access
+		mprotect(*ppDataStart - (*pDataAllocSize + MEMPAGESIZE), MEMPAGESIZE, PROT_NONE);
+
+		// calculate correct data pointer in new memory region (since it could've moved)
 		pData = *ppDataStart + DataOffset;
-		// mov  edx, [ebp+pData] ; Fix data pointer
-		// ^ intel syntax
-		// v gas syntax
-		asm("mov %[pData], %%edx"
-				:: [pData] "m" (pData) : "edx");
+
+		// put new data pointer into edx register
+		pContext->uc_mcontext.gregs[REG_EDX] = (uintptr_t)pData;
+
+		// restore execution at failed instruction, yay \o/
+		setcontext(pContext);
 	}
 #endif
 
@@ -285,7 +288,9 @@ int BuildJumpTable(char *pBuf, size_t Length, uint32_t **ppJumpTable)
 			{
 				uint32_t Jump = Stack_Pop(pStack);
 
+				// '[' jumps to previously push'd ']' position
 				pJumpTable[i] = Jump;
+				// previously push'd '[' jumps to this ']'
 				pJumpTable[Jump] = i;
 			} break;
 		}
@@ -344,7 +349,7 @@ uint32_t RunBrainfuck(CBrainfuckContext *pContext)
 	unsigned char *pDataStart = pContext->pDataStart;
 	register unsigned char *pData = pContext->pData;
 	unsigned char *pDataEnd = pDataStart + pContext->DataSize;
-	register uint32_t *pJumpTable = pContext->pJumpTable;
+	uint32_t *pJumpTable = pContext->pJumpTable;
 
 	for(;; Position++)
 	{
@@ -387,7 +392,7 @@ uint32_t RunBrainfuck(CBrainfuckContext *pContext)
 			} break;
 			case ',':
 			{
-				*pData = (unsigned char)(getchar() & 0xFF);
+				*pData = getchar();
 			} break;
 			case '[':
 			{
@@ -807,14 +812,8 @@ int CMD_show(CBrainfuckContext *pContext, int argc, char *argv[])
 		return 0;
 	}
 
-	// Mark end of string by '\0'
-	char Backup = pContext->pProgram[pContext->Position + Size];
-	pContext->pProgram[pContext->Position + Size] = 0;
-
-	printf("%s\n", &pContext->pProgram[pContext->Position]);
-
-	// And restore...
-	pContext->pProgram[pContext->Position + Size] = Backup;
+	// Print <Size> amount of characters
+	printf("%.*s\n", Size, &pContext->pProgram[pContext->Position]);
 
 	return 0;
 }
@@ -1074,11 +1073,11 @@ unsigned char *JITCompileBrainfuck(char *pBuf, size_t Length, size_t *pProgramAl
 		if(ProgramAllocSize - ProgramSize <= sizeof(aInstPrintData))
 		{
 			// This works because our jumps are relative
-			ProgramAllocSize += MEMPAGESIZE;
-			void *pAlloc = mremap(pProgram, ProgramAllocSize, ProgramAllocSize, MREMAP_MAYMOVE);
+			void *pAlloc = mremap(pProgram, ProgramAllocSize, ProgramAllocSize + MEMPAGESIZE, MREMAP_MAYMOVE);
 			if(pAlloc == MAP_FAILED) // this could be anything, need to check errno...
 				ERROR(2, "out of memory\n");
 
+			ProgramAllocSize += MEMPAGESIZE;
 			pProgram = pAlloc;
 		}
 	}
@@ -1101,7 +1100,7 @@ unsigned char *JITCompileBrainfuck(char *pBuf, size_t Length, size_t *pProgramAl
 	return pProgram;
 }
 /*
-Breakpoint Idee:
+Breakpoint Idee: (RIP wegen optimizing)
 mov breakpoint-num, eax
 mov [esp], ebx
 call ebx
@@ -1164,14 +1163,14 @@ int main(int argc, char *argv[])
 		ProgramSize = LoadProgram(argv[2], &pProgram);
 
 #ifdef BONUS
-		size_t DataAllocSize = MEMPAGESIZE * 16 + MEMPAGESIZE;
+		size_t DataAllocSize = MEMPAGESIZE + MEMPAGESIZE;
 		unsigned char *pData = mmap(0, DataAllocSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		if(pData == MAP_FAILED)
 			ERROR(2, "out of memory\n");
 		unsigned char *pDataStart = pData;
 
-		// Set up trap
-		mprotect(pData + DataAllocSize - MEMPAGESIZE, MEMPAGESIZE, PROT_NONE);
+		// Set up memory trap
+		mprotect(pData + (DataAllocSize - MEMPAGESIZE), MEMPAGESIZE, PROT_NONE);
 
 		// install SIGSEGV trap
 		// this is used to detect invalid memory access
@@ -1189,6 +1188,8 @@ int main(int argc, char *argv[])
 		unsigned char *pBinary;
 		pBinary = JITCompileBrainfuck(pProgram, ProgramSize, &BinaryAllocSize);
 
+		free(pProgram);
+
 		int Ret;
 		// mov  edx, [ebp+pData]
 		// ^ intel syntax
@@ -1203,6 +1204,9 @@ int main(int argc, char *argv[])
 		// v gas syntax
 		asm("mov %%edx, %[pData]"
 				: [pData] "=r" (pData) :: "edx");
+
+		// supress unused variable
+		(void)Ret;
 
 		munmap(pDataStart, DataAllocSize);
 		munmap(pBinary, BinaryAllocSize);

@@ -1,0 +1,6 @@
+eval +++>++
+eval -
+memory
+eval <
+memory
+quit

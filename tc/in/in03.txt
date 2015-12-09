@@ -1,0 +1,13 @@
+load samples/hello.bf
+break 1
+run
+memory
+eval +
+memory
+eval -
+memory
+break 2
+run
+memory
+run
+quit
