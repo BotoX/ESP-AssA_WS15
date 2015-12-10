@@ -14,6 +14,18 @@
 #include <stdint.h>
 #include <limits.h>
 
+// Uncomment for bonus
+//#define BONUS
+#ifdef BONUS
+	#include <sys/mman.h>
+	#include <unistd.h>
+	#define MEMPAGESIZE sysconf(_SC_PAGE_SIZE)
+	#define MEMPAGEMASK ~(MEMPAGESIZE - 1)
+
+	#include <signal.h>
+	#include <ucontext.h>
+#endif
+
 #define ERROR(error, fmt, ...) \
 	do { \
 		fprintf(/*stderr*/stdout, "[ERR] " fmt, ##__VA_ARGS__); \
@@ -163,7 +175,8 @@ void BrainfuckContext_Init(CBrainfuckContext *pContext, char *pProgram, uint32_t
 ///
 /// @return void
 //
-void SIGSEGV_Handler(int Signal, siginfo_t *pSignal, void *pArg);
+static void SIGSEGV_Handler(int Signal, siginfo_t *pSignal, void *pArg);
+
 //-----------------------------------------------------------------------------
 ///
 /// "Compiles" Brainfuck code into optimized x86 machine code.
@@ -236,17 +249,7 @@ uint32_t RunBrainfuck(CBrainfuckContext *pContext);
 //
 int main(int argc, char *argv[]);
 
-// Uncomment for bonus
-//#define BONUS
 #ifdef BONUS
-	#include <sys/mman.h>
-	#include <unistd.h>
-	#define MEMPAGESIZE sysconf(_SC_PAGE_SIZE)
-	#define MEMPAGEMASK ~(MEMPAGESIZE - 1)
-
-	#include <signal.h>
-	#include <ucontext.h>
-
 	static void SIGSEGV_Handler(int Signal, siginfo_t *pSignal, void *pArg)
 	{
 		// Hack to avoid global vars
