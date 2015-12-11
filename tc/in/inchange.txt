@@ -1,0 +1,21 @@
+change 0 1
+eval +>-
+memory 0
+memory 1
+change 0 ff
+change 1 1
+memory 0
+memory 1
+eval -<-
+memory 0
+memory 1
+change 0 41
+eval .
+
+load tc/bf/A.bf
+break 0
+run
+change 0 5
+run
+
+quit

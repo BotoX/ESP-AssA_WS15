@@ -1,0 +1,4 @@
+load tc/bf/hello_world.bf
+run
+run
+quit

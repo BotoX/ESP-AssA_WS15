@@ -1,0 +1,4 @@
+eval +
+load tc/bf/A.bf
+run
+quit

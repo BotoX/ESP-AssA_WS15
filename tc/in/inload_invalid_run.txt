@@ -1,0 +1,3 @@
+load tc/bf/invalid.bf
+run
+quit

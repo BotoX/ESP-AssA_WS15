@@ -1,0 +1,26 @@
+memory
+load tc/bf/A.bf
+memory
+run
+memory
+memory 0
+memory 0 hex
+memory 0 int
+memory 0 bin
+memory 0 char
+eval [-]-
+memory 0
+memory 0 hex
+memory 0 int
+memory 0 bin
+memory 0 char
+load tc/bf/A.bf
+eval >
+run
+eval <
+memory 1
+memory 1 hex
+memory 1 int
+memory 1 bin
+memory 1 char
+quit

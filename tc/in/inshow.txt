@@ -1,0 +1,11 @@
+show
+load tc/bf/hello_world.bf
+show
+show 50
+break 10
+run
+show
+show 50
+run
+show
+quit

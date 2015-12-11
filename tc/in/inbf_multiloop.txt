@@ -1,0 +1,3 @@
+load tc/bf/hello_world_multiloop.bf
+run
+quit

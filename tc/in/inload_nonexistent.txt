@@ -1,0 +1,2 @@
+load tc/bf/nothing.bf
+quit

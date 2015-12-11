@@ -1,0 +1,19 @@
+esp> [ERR] no program loaded
+esp> esp> [ERR] no program loaded
+esp> Aesp> Hex at 0: 41
+esp> Hex at 0: 41
+esp> Hex at 0: 41
+esp> Integer at 0: 65
+esp> Binary at 0: 01000001
+esp> Char at 0: A
+esp> esp> Hex at 0: ff
+esp> Hex at 0: ff
+esp> Integer at 0: 255
+esp> Binary at 0: 11111111
+esp> Char at 0: ÿ
+esp> esp> esp> Aesp> esp> Hex at 1: 41
+esp> Hex at 1: 41
+esp> Integer at 1: 65
+esp> Binary at 1: 01000001
+esp> Char at 1: A
+esp> Bye.

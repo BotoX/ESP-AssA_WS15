@@ -70,9 +70,9 @@ for f in $TEST_PATH/in/*.txt; do
 		if [ "${answer,,}" == "vimdiff" ] || [ "${answer,,}" == "yes" ] || [ "${answer,,}" == "y" ]; then
 			vimdiff "$ref" "$user"
 		elif [ "${answer,,}" == "diff" ]; then
-			diff "$ref" "$user"
+			diff -a "$ref" "$user"
 			read
 		fi
 	fi
 done
-rm -r "$TEST_PATH/user"
+#rm -r "$TEST_PATH/user"

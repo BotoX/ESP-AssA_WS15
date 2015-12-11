@@ -1,0 +1,19 @@
+break 10
+load tc/bf/A.bf
+break
+break 0
+run
+memory
+break 3
+break 2
+run
+memory
+break 1
+run
+memory
+break 5
+break 5
+run
+run
+break 10
+quit

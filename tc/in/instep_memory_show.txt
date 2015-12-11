@@ -1,0 +1,28 @@
+step
+step 10
+load tc/bf/steptest.bf
+step
+memory
+step 4
+memory
+show
+step
+memory
+show
+step
+memory
+show
+step
+memory
+show
+step
+memory
+show
+step 8
+memory
+show
+step 100
+memory
+show
+step
+quit

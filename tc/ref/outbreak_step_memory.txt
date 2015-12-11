@@ -1,0 +1,9 @@
+esp> esp> esp> esp> esp> esp> Hex at 0: 1
+esp> ++++++++++
+esp> esp> Hex at 0: 2
+esp> ++++++++++
+esp> esp> Hex at 0: 2
+esp> ++++++++++
+esp> esp> Hex at 0: 3
+esp> ++++++++++
+esp> Aesp> Bye.
