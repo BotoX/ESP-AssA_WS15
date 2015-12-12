@@ -670,9 +670,6 @@ int CMD_step(CBrainfuckContext *pContext, int argc, char *argv[])
 		if(Temp <= 0)
 			return 1;
 
-		if(Temp >= pContext->ProgramSize)
-			return CMD_run(pContext, 0, 0);
-
 		Steps = Temp;
 	}
 
@@ -1331,12 +1328,12 @@ int BuildJumpTable(char *pBuf, size_t Length, uint32_t **ppJumpTable)
 		case '[': \
 		{ \
 			if(!*pData) \
-				Position = pJumpTable[Position]; \
+				Position = pJumpTable[Position] - 1; \
 		} break; \
 		case ']': \
 		{ \
 			if(*pData) \
-				Position = pJumpTable[Position]; \
+				Position = pJumpTable[Position] - 1; \
 		} break; \
 		default: \
 		{ \

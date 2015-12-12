@@ -18,7 +18,19 @@ show
 step
 memory
 show
-step 8
+step
+memory
+show
+step 10
+memory
+show
+step
+memory
+show
+step
+memory
+show
+step
 memory
 show
 step 100

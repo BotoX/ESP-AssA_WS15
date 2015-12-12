@@ -2,15 +2,23 @@ esp> [ERR] no program loaded
 esp> [ERR] no program loaded
 esp> esp> esp> Hex at 0: 1
 esp> esp> Hex at 0: 5
-esp> [-]+++
+esp> [-][-]+++
 esp> esp> Hex at 0: 5
-esp> -]+++
+esp> -][-]+++
 esp> esp> Hex at 0: 4
-esp> ]+++
+esp> ][-]+++
 esp> esp> Hex at 0: 4
-esp> -]+++
+esp> [-][-]+++
+esp> esp> Hex at 0: 4
+esp> -][-]+++
 esp> esp> Hex at 0: 3
+esp> ][-]+++
+esp> esp> Hex at 0: 0
+esp> [-]+++
+esp> esp> Hex at 0: 0
 esp> ]+++
+esp> esp> Hex at 0: 0
+esp> +++
 esp> esp> Hex at 0: 1
 esp> ++
 esp> esp> Hex at 0: 3

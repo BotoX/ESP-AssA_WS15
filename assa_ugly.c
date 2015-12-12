@@ -1330,12 +1330,12 @@ int buildJumpTable(char *p_buf, size_t length, uint32_t **pp_jump_table)
     case '[': \
     { \
       if(!*p_data) \
-        position = p_jump_table[position]; \
+        position = p_jump_table[position] - 1; \
     } break; \
     case ']': \
     { \
       if(*p_data) \
-        position = p_jump_table[position]; \
+        position = p_jump_table[position] - 1; \
     } break; \
     default: \
     { \
