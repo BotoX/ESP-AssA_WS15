@@ -713,7 +713,7 @@ int CMD_memory(CBrainfuckContext *pContext, int argc, char *argv[])
 		}
 		else
 		{
-			if(Temp >= pContext->DataSize || Temp < 0)
+			if(Temp < 0 || Temp >= pContext->DataSize)
 				return 1;
 
 			Position = Temp;
@@ -826,6 +826,9 @@ int CMD_change(CBrainfuckContext *pContext, int argc, char *argv[])
 
 	if(argc >= 3)
 		Value = strtol(argv[2], 0, 16);
+
+	if(Position < 0 || Position >= pContext->DataSize)
+		return 1;
 
 	unsigned char *pData = pContext->pDataStart + Position;
 

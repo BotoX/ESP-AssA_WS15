@@ -715,7 +715,7 @@ int cmdMemory(CBrainfuckContext *p_context, int argc, char **argv)
     }
     else
     {
-      if(temp >= p_context->data_size_ || temp < 0)
+      if(temp < 0 || temp >= p_context->data_size_)
         return 1;
 
       position = temp;
@@ -828,6 +828,9 @@ int cmdChange(CBrainfuckContext *p_context, int argc, char **argv)
 
   if(argc >= 3)
     value = strtol(argv[2], 0, 16);
+
+  if(position < 0 || position > p_context->data_size_)
+    return 1;
 
   unsigned char *p_data = p_context->p_data_start_ + position;
 
@@ -1342,7 +1345,7 @@ int buildJumpTable(char *p_buf, size_t length, uint32_t **pp_jump_table)
       p_context->position_ = p_program - p_program_start; \
       p_context->p_data_ = p_data; \
  \
-      return p_context->position; \
+      return p_context->position_; \
     } break; \
   }
 
