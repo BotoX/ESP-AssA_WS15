@@ -17,182 +17,181 @@
 // Uncomment for bonus
 //#define BONUS
 #ifdef BONUS
-	#include <sys/mman.h>
-	#include <unistd.h>
-	#define MEMPAGESIZE sysconf(_SC_PAGE_SIZE)
-	#define MEMPAGEMASK ~(MEMPAGESIZE - 1)
+  #include <sys/mman.h>
+  #include <unistd.h>
+  #define MEMPAGESIZE sysconf(_SC_PAGE_SIZE)
+  #define MEMPAGEMASK ~(MEMPAGESIZE - 1)
 
-	#include <signal.h>
-	#include <ucontext.h>
+  #include <signal.h>
+  #include <ucontext.h>
 #endif
 
 // Data Types
 typedef struct
 {
-	uint32_t *pData;
-	size_t Size;
-	size_t AllocSize;
+  uint32_t *p_data_;
+  size_t size_;
+  size_t alloc_size_;
 } CStack;
 
 typedef struct
 {
-	uint32_t Position;
-	char *pProgram;
-	size_t ProgramSize;
+  uint32_t position_;
+  char *p_program_;
+  size_t program_size_;
 
-	uint32_t *pJumpTable;
+  uint32_t *p_jump_table_;
 
-	uint32_t *pBreakPoints;
-	size_t BreakPointsSize;
-	char *pBreakPointsBackup;
+  uint32_t *p_break_points_;
+  size_t break_points_size_;
+  char *p_break_points_backup_;
 
-	unsigned char *pDataStart;
-	unsigned char *pData;
-	size_t DataSize;
-	size_t DataAllocSize;
+  unsigned char *p_data_start_;
+  unsigned char *p_data_;
+  size_t data_size_;
+  size_t data_alloc_size_;
 } CBrainfuckContext;
 
-typedef int (*pfnCommand)(CBrainfuckContext *pContext, int argc, char *argv[]);
+typedef int (*pfnCommand)(CBrainfuckContext *p_context, int argc, char *argv[]);
 typedef struct
 {
-	const char *pCmd;
-	pfnCommand pfnCmd;
+  const char *p_cmd_;
+  pfnCommand pfn_cmd_;
 } CCommand;
 
 // Function prototypes
-
 //-----------------------------------------------------------------------------
 ///
 /// Prints an error message to stdout and exits depending on initialization.
 /// First call to function is initialization, Error code represents mode.
 ///
-/// @param Error Error code / return code.
-/// @param pMessage Error message.
+/// @param error Error code / return code.
+/// @param p_message Error message.
 ///
 /// @return void
 //
-void error(int Error, const char *pMessage);
+void error(int error, const char *p_message);
 
 //-----------------------------------------------------------------------------
 ///
 /// Allocate or grow memory for a stack.
 ///
-/// @param pStack Pointer to CStack object.
-/// @param Size Size to allocate.
+/// @param p_stack Pointer to CStack object.
+/// @param size size to allocate.
 ///
 /// @return void
 //
-void Stack_Alloc(CStack *pStack, size_t Size);
+void stackAlloc(CStack *p_stack, size_t size);
 
 //-----------------------------------------------------------------------------
 ///
 /// Create a new stack.
 ///
-/// @param pStack Pointer to CStack object.
-/// @param StartSize Size to initially allocate.
+/// @param p_stack Pointer to CStack object.
+/// @param start_size size to initially allocate.
 ///
 /// @return void
 //
-void Stack_Init(CStack *pStack, size_t StartSize);
+void stackInit(CStack *p_stack, size_t start_size);
 
 //-----------------------------------------------------------------------------
 ///
 /// Destroy a given stack.
 ///
-/// @param pStack Pointer to CStack object.
+/// @param p_stack Pointer to CStack object.
 ///
 /// @return void
 //
-void Stack_Destroy(CStack *pStack);
+void stackDestroy(CStack *p_stack);
 
 //-----------------------------------------------------------------------------
 ///
 /// Push Element onto stack.
 ///
-/// @param pStack Pointer to CStack object.
+/// @param p_stack Pointer to CStack object.
 /// @param Element Element to push onto stack.
 ///
 /// @return void
 //
-void Stack_Push(CStack *pStack, uint32_t Element);
+void stackPush(CStack *p_stack, uint32_t element);
 
 //-----------------------------------------------------------------------------
 ///
 /// Pop Element from stack.
 ///
-/// @param pStack Pointer to CStack object.
+/// @param p_stack Pointer to CStack object.
 ///
 /// @return The Element pop'd or UINT32_MAX if the stack is empty.
 //
-uint32_t Stack_Pop(CStack *pStack);
+uint32_t stackPop(CStack *p_stack);
 
-int CMD_load(CBrainfuckContext *pContext, int argc, char *argv[]);
-int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[]);
-int CMD_eval(CBrainfuckContext *pContext, int argc, char *argv[]);
-int CMD_break(CBrainfuckContext *pContext, int argc, char *argv[]);
-int CMD_step(CBrainfuckContext *pContext, int argc, char *argv[]);
-int CMD_memory(CBrainfuckContext *pContext, int argc, char *argv[]);
-int CMD_show(CBrainfuckContext *pContext, int argc, char *argv[]);
-int CMD_change(CBrainfuckContext *pContext, int argc, char *argv[]);
-int CMD_quit(CBrainfuckContext *pContext, int argc, char *argv[]);
+int cmdLoad(CBrainfuckContext *p_context, int argc, char **argv);
+int cmdRun(CBrainfuckContext *p_context, int argc, char **argv);
+int cmdEval(CBrainfuckContext *p_context, int argc, char **argv);
+int cmdBreak(CBrainfuckContext *p_context, int argc, char **argv);
+int cmdStep(CBrainfuckContext *p_context, int argc, char **argv);
+int cmdMemory(CBrainfuckContext *p_context, int argc, char **argv);
+int cmdShow(CBrainfuckContext *p_context, int argc, char **argv);
+int cmdChange(CBrainfuckContext *p_context, int argc, char **argv);
+int cmdQuit(CBrainfuckContext *p_context, int argc, char **argv);
 
 //-----------------------------------------------------------------------------
 ///
 /// Parses and executes a command line command.
 ///
-/// @param pContext Pointer to CBrainfuckContext object.
-/// @param pCommand Pointer to first CCommand object in a null-terminated array.
-/// @param pLine String to evaluate.
+/// @param p_context Pointer to CBrainfuckContext object.
+/// @param p_command Pointer to first CCommand object in a null-terminated array.
+/// @param p_line String to evaluate.
 ///
-/// @return Returnvale of executed command or -1 if none is found.
+/// @return Returnvalue of executed command or -1 if none is found.
 //
-int CommandLine(CBrainfuckContext *pContext, CCommand *pCommand, char *pLine);
+int commandLine(CBrainfuckContext *p_context, CCommand *p_command, char *p_line);
 
 //-----------------------------------------------------------------------------
 ///
 /// Loads a file into memory and filters invalid characters from it.
 ///
-/// @param pFilename Path of the file.
-/// @param ppProgram Pointer to string which will hold the result.
+/// @param p_filename Path of the file.
+/// @param pp_program Pointer to string which will hold the result.
 ///
-/// @return Length of ppProgram.
+/// @return Length of pp_program.
 //
-size_t LoadProgram(const char *pFilename, char **ppProgram);
+size_t loadProgram(const char *p_filename, char **pp_program);
 
 //-----------------------------------------------------------------------------
 ///
 /// Initializes a new CBrainfuckContext object.
 ///
-/// @param pContext Pointer to CBrainfuckContext object.
-/// @param pProgram Brainfuck program string.
-/// @param pJumpTable Brainfuck program jumptable.
+/// @param p_context Pointer to CBrainfuckContext object.
+/// @param p_program Brainfuck program string.
+/// @param p_jump_table Brainfuck program jumptable.
 ///
 /// @return void
 //
-void BrainfuckContext_Init(CBrainfuckContext *pContext, char *pProgram, uint32_t *pJumpTable);
+void brainfuckContextInit(CBrainfuckContext *p_context, char *p_program, uint32_t *p_jump_table);
 
 //-----------------------------------------------------------------------------
 ///
 /// Initializes data memory for the CBrainfuckContext object.
 ///
-/// @param pContext Pointer to CBrainfuckContext object.
+/// @param p_context Pointer to CBrainfuckContext object.
 ///
 /// @return void
 //
-void BrainfuckContext_InitData(CBrainfuckContext *pContext);
+void brainfuckContextInitData(CBrainfuckContext *p_context);
 
 #ifdef BONUS
 //-----------------------------------------------------------------------------
 ///
 /// Segmentation fault signal handler.
 ///
-/// @param Signal Signal that invoked us (always SIGSEGV or not SIGSEGV for init).
-/// @param pSignal Pointer to siginfo_t object.
-/// @param pArg Pointer to unkown object. On Linux ucontext_t.
+/// @param signal Signal that invoked us (always SIGSEGV or not SIGSEGV for init).
+/// @param p_signal Pointer to siginfo_t object.
+/// @param p_arg Pointer to unkown object. On Linux ucontext_t.
 ///
 /// @return void
 //
-static void SIGSEGV_Handler(int Signal, siginfo_t *pSignal, void *pArg);
+static void sigsegvHandler(int signal, siginfo_t *p_signal, void *p_arg);
 
 //-----------------------------------------------------------------------------
 ///
@@ -208,20 +207,20 @@ static void SIGSEGV_Handler(int Signal, siginfo_t *pSignal, void *pArg);
 /// 0 = program exited normaly, no breakpoint occured.
 /// >0 = above assembler has been executed, read on.
 ///
-/// Jumps to instruction after brainfuck code invocation ((int(*)())pBinary)();
+/// Jumps to instruction after brainfuck code invocation ((int(*)())p_binary)();
 /// Pop stack once to get EIP (instruction pointer) of next instruction
 /// where program returned because of a breakpoint.
 /// Pop stack second time to get rid of previous EIP on stack.
 /// Can use first pop'd EIP to jump back into brainfuck program afterwards.
 ///
-/// @param pBuf Brainfuck program.
-/// @param Length Length of pBuf.
-/// @param pProgramAllocSize Pointer to variable which will hold the size of
-///							 the compiled program.
+/// @param p_buf Brainfuck program.
+/// @param length Length of p_buf.
+/// @param p_program_alloc_size Pointer to variable which will hold the size of
+///              the compiled program.
 ///
 /// @return Pointer to compiled program.
 //
-unsigned char *JITCompileBrainfuck(char *pBuf, size_t Length, size_t *pProgramAllocSize);
+unsigned char *jitCompileBrainfuck(char *p_buf, size_t length, size_t *p_program_alloc_size);
 #endif
 
 //-----------------------------------------------------------------------------
@@ -235,24 +234,24 @@ unsigned char *JITCompileBrainfuck(char *pBuf, size_t Length, size_t *pProgramAl
 /// so basically use this great library: http://www.nedprod.com/programs/portable/nedtries/
 /// in case of hanoi.bf this will use about 218k memory
 ///
-/// @param pBuf Brainfuck program.
-/// @param Length Length of pBuf.
-/// @param ppJumpTable Pointer to JumpTable which will hold the result.
+/// @param p_buf Brainfuck program.
+/// @param length Length of p_buf.
+/// @param pp_jump_table Pointer to JumpTable which will hold the result.
 ///
-/// @return non-zero on failure
+/// @return non-zero on error
 //
-int BuildJumpTable(char *pBuf, size_t Length, uint32_t **ppJumpTable);
+int buildJumpTable(char *p_buf, size_t length, uint32_t **pp_jump_table);
 
 //-----------------------------------------------------------------------------
 ///
 /// Runs a given CBrainfuckContext object.
 ///
-/// @param pContext Pointer to CBrainfuckContext object.
+/// @param p_context Pointer to CBrainfuckContext object.
 /// @param steps Number of steps to execute or 0 to run the full program.
 ///
-/// @return Position of the instruction pointer.
+/// @return position of the instruction pointer.
 //
-uint32_t RunBrainfuck(CBrainfuckContext *pContext, size_t Steps);
+uint32_t runBrainfuck(CBrainfuckContext *p_context, size_t steps);
 
 //------------------------------------------------------------------------------
 ///
@@ -267,1230 +266,1233 @@ uint32_t RunBrainfuck(CBrainfuckContext *pContext, size_t Steps);
 //
 int main(int argc, char *argv[]);
 
-void error(int Error, const char *pMessage)
+void error(int error, const char *p_message)
 {
-	static char Initialized = 0;
-	// Mode = 0 "-e" -> exit on error
-	// Mode = 1 -> interactive, only exit on errorcode 2
-	static char Mode = 0;
-	if(!Initialized)
-	{
-		Initialized = 1;
-		Mode = Error;
-		return;
-	}
+  static char initializated = 0;
+  // mode = 0 "-e" -> exit on error
+  // mode = 1 -> interactive, only exit on errorcode 2
+  static char mode = 0;
+  if(!initializated)
+  {
+    initializated = 1;
+    mode = error;
+    return;
+  }
 
-	printf(pMessage);
+  printf(p_message);
 
-	if(!Mode || Error == 2)
-		exit(Error);
+  if(!mode || error == 2)
+    exit(error);
 }
 
 #ifdef BONUS
-	static void SIGSEGV_Handler(int Signal, siginfo_t *pSignal, void *pArg)
-	{
-		// Hack to avoid global vars
-		static unsigned char **ppDataStart = 0;
-		static size_t *pDataAllocSize = 0;
-		if(Signal != SIGSEGV)
-		{
-			ppDataStart = (unsigned char **)pSignal;
-			pDataAllocSize = (size_t *)pArg;
-			return;
-		}
+  static void sigsegvHandler(int signal, siginfo_t *p_signal, void *p_arg)
+  {
+    // Hack to avoid global vars
+    static unsigned char **pp_data_start = 0;
+    static size_t *p_data_alloc_size = 0;
+    if(signal != SIGSEGV)
+    {
+      pp_data_start = (unsigned char **)p_signal;
+      p_data_alloc_size = (size_t *)p_arg;
+      return;
+    }
 
-		// previous execution context
-		ucontext_t *pContext = pArg;
+    // previous execution context
+    ucontext_t *p_context = p_arg;
 
-		// edx register from crashed execution context is the current pData pointer
-		unsigned char *pData = (unsigned char *)pContext->uc_mcontext.gregs[REG_EDX];
+    // edx register from crashed execution context is the current p_data pointer
+    unsigned char *p_data = (unsigned char *)p_context->uc_mcontext.gregs[REG_EDX];
 
-		// calc offset using pDataStart
-		size_t DataOffset = pData - *ppDataStart;
+    // calc offset using p_data_start
+    size_t data_offset = p_data - *pp_data_start;
 
-		// reset locked memory page protection
-		mprotect(*ppDataStart, *pDataAllocSize + MEMPAGESIZE, PROT_READ | PROT_WRITE);
+    // reset locked memory page protection
+    mprotect(*pp_data_start, *p_data_alloc_size + MEMPAGESIZE, PROT_READ | PROT_WRITE);
 
-		// allocate another memory page for data
-		void *pAlloc = mremap(*ppDataStart, *pDataAllocSize, *pDataAllocSize + MEMPAGESIZE, MREMAP_MAYMOVE);
-		if(pAlloc == MAP_FAILED) // this could be anything, need to check errno...
-			error(2, "[ERR] out of memory\n");
+    // allocate another memory page for data
+    void *p_alloc = mremap(*pp_data_start, *p_data_alloc_size, *p_data_alloc_size + MEMPAGESIZE, MREMAP_MAYMOVE);
+    if(p_alloc == MAP_FAILED) // this could be anything, need to check errno...
+      error(2, "[ERR] out of memory\n");
 
-		// fix variables in main
-		*pDataAllocSize += MEMPAGESIZE;
-		*ppDataStart = pAlloc;
+    // fix variables in main
+    *p_data_alloc_size += MEMPAGESIZE;
+    *pp_data_start = p_alloc;
 
-		// lock next memory page again so we can catch the next invalid memory access
-		mprotect(*ppDataStart - (*pDataAllocSize + MEMPAGESIZE), MEMPAGESIZE, PROT_NONE);
+    // lock next memory page again so we can catch the next invalid memory access
+    mprotect(*pp_data_start - (*p_data_alloc_size + MEMPAGESIZE), MEMPAGESIZE, PROT_NONE);
 
-		// calculate correct data pointer in new memory region (since it could've moved)
-		pData = *ppDataStart + DataOffset;
+    // calculate correct data pointer in new memory region (since it could've moved)
+    p_data = *pp_data_start + data_offset;
 
-		// put new data pointer into edx register
-		pContext->uc_mcontext.gregs[REG_EDX] = (uintptr_t)pData;
+    // put new data pointer into edx register
+    p_context->uc_mcontext.gregs[REG_EDX] = (uintptr_t)p_data;
 
-		// restore execution at failed instruction, yay \o/
-		setcontext(pContext);
-	}
+    // restore execution at failed instruction, yay \o/
+    setcontext(p_context);
+  }
 #endif
 
 
 /* CStack */
-void Stack_Alloc(CStack *pStack, size_t Size)
+void stackAlloc(CStack *p_stack, size_t size)
 {
-	if(pStack->AllocSize == 0)
-	{
-		pStack->AllocSize = Size;
-		pStack->pData = malloc(pStack->AllocSize * sizeof(size_t));
-		if(!pStack->pData)
-			error(2, "[ERR] out of memory\n");
-	}
-	else
-	{
-		pStack->AllocSize += Size;
-		void *pAlloc = realloc(pStack->pData, pStack->AllocSize * sizeof(size_t));
-		if(!pStack->pData)
-		{
-			free(pStack->pData);
-			error(2, "[ERR] out of memory\n");
-		}
-		pStack->pData = pAlloc;
-	}
+  if(p_stack->alloc_size_ == 0)
+  {
+    p_stack->alloc_size_ = size;
+    p_stack->p_data_ = malloc(p_stack->alloc_size_ * sizeof(size_t));
+    if(!p_stack->p_data_)
+      error(2, "[ERR] out of memory\n");
+  }
+  else
+  {
+    p_stack->alloc_size_ += size;
+    void *p_alloc = realloc(p_stack->p_data_, p_stack->alloc_size_ * sizeof(size_t));
+    if(!p_stack->p_data_)
+    {
+      free(p_stack->p_data_);
+      error(2, "[ERR] out of memory\n");
+    }
+    p_stack->p_data_ = p_alloc;
+  }
 }
 
-void Stack_Init(CStack *pStack, size_t StartSize)
+void stackInit(CStack *p_stack, size_t start_size)
 {
-	pStack->Size = 0;
-	pStack->AllocSize = 0;
-	if(StartSize)
-		Stack_Alloc(pStack, StartSize);
+  p_stack->size_ = 0;
+  p_stack->alloc_size_ = 0;
+  if(start_size)
+    stackAlloc(p_stack, start_size);
 }
 
-void Stack_Destroy(CStack *pStack)
+void stackDestroy(CStack *p_stack)
 {
-	pStack->Size = 0;
-	pStack->AllocSize = 0;
-	free(pStack->pData);
+  p_stack->size_ = 0;
+  p_stack->alloc_size_ = 0;
+  free(p_stack->p_data_);
 }
 
-void Stack_Push(CStack *pStack, uint32_t Element)
+void stackPush(CStack *p_stack, uint32_t element)
 {
-	if(pStack->Size >= pStack->AllocSize)
-		Stack_Alloc(pStack, 32);
+  if(p_stack->size_ >= p_stack->alloc_size_)
+    stackAlloc(p_stack, 32);
 
-	pStack->pData[pStack->Size++] = Element;
+  p_stack->p_data_[p_stack->size_++] = element;
 }
 
-uint32_t Stack_Pop(CStack *pStack)
+uint32_t stackPop(CStack *p_stack)
 {
-	if(pStack->Size == 0)
-		return UINT32_MAX;
+  if(p_stack->size_ == 0)
+    return UINT32_MAX;
 
-	return pStack->pData[--pStack->Size];
+  return p_stack->p_data_[--p_stack->size_];
 }
 /* CStack */
 
 /* Console */
-int CMD_load(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdLoad(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(argc < 2)
-	{
-		printf("[ERR] wrong parameter count\n");
-		return 1;
-	}
+  if(argc < 2)
+  {
+    printf("[ERR] wrong parameter count\n");
+    return 1;
+  }
 
-	if(pContext->pProgram)
-	{
-		free(pContext->pProgram);
-		pContext->pProgram = 0;
-		pContext->Position = 0;
+  if(p_context->p_program_)
+  {
+    free(p_context->p_program_);
+    p_context->p_program_ = 0;
+    p_context->position_ = 0;
 
-		free(pContext->pJumpTable);
-		pContext->pJumpTable = 0;
+    free(p_context->p_jump_table_);
+    p_context->p_jump_table_ = 0;
 
-		if(pContext->pBreakPoints)
-		{
-			free(pContext->pBreakPoints);
-			pContext->pBreakPoints = 0;
+    if(p_context->p_break_points_)
+    {
+      free(p_context->p_break_points_);
+      p_context->p_break_points_ = 0;
 
-			if(pContext->pBreakPointsBackup)
-			{
-				free(pContext->pBreakPointsBackup);
-				pContext->pBreakPointsBackup = 0;
-			}
-		}
-	}
+      if(p_context->p_break_points_backup_)
+      {
+        free(p_context->p_break_points_backup_);
+        p_context->p_break_points_backup_ = 0;
+      }
+    }
+  }
 
-	if(pContext->pData)
-	{
-		free(pContext->pDataStart);
-		pContext->pData = 0;
-		pContext->pDataStart = 0;
-		pContext->DataSize = 0;
-	}
+  if(p_context->p_data_)
+  {
+    free(p_context->p_data_start_);
+    p_context->p_data_ = 0;
+    p_context->p_data_start_ = 0;
+    p_context->data_size_ = 0;
+  }
 
-	pContext->ProgramSize = LoadProgram(argv[1], &pContext->pProgram);
-	if(!pContext->ProgramSize)
-		return 1;
+  p_context->program_size_ = loadProgram(argv[1], &p_context->p_program_);
+  if(!p_context->program_size_)
+    return 1;
 
-	if(BuildJumpTable(pContext->pProgram, pContext->ProgramSize, &pContext->pJumpTable))
-	{
-		free(pContext->pProgram);
-		pContext->pProgram = 0;
-		return 1;
-	}
+  if(buildJumpTable(p_context->p_program_, p_context->program_size_, &p_context->p_jump_table_))
+  {
+    free(p_context->p_program_);
+    p_context->p_program_ = 0;
+    return 1;
+  }
 
-	return 0;
+  return 0;
 }
 
-int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdRun(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(!pContext->pProgram)
-	{
-		printf("[ERR] no program loaded\n");
-		return 1;
-	}
+  if(!p_context->p_program_)
+  {
+    printf("[ERR] no program loaded\n");
+    return 1;
+  }
 
-	size_t Steps = 0;
-	if(argc == -1)
-		Steps = *((size_t *)argv);
+  size_t steps = 0;
+  if(argc == -1)
+    steps = *((size_t *)argv);
 
-	if(!pContext->pData)
-		BrainfuckContext_InitData(pContext);
+  if(!p_context->p_data_)
+    brainfuckContextInitData(p_context);
 
-	if(pContext->pBreakPoints)
-	{
-		size_t i;
-		if(!pContext->pBreakPointsBackup)
-		{
-			// Create array for storing original instructions
-			pContext->pBreakPointsBackup = malloc(pContext->BreakPointsSize);
-			if(!pContext->pBreakPointsBackup)
-				error(2, "[ERR] out of memory\n");
+  if(p_context->p_break_points_)
+  {
+    size_t i;
+    if(!p_context->p_break_points_backup_)
+    {
+      // Create array for storing original instructions
+      p_context->p_break_points_backup_ = malloc(p_context->break_points_size_);
+      if(!p_context->p_break_points_backup_)
+        error(2, "[ERR] out of memory\n");
 
-			for(i = 0; i < pContext->BreakPointsSize; i++)
-			{
-				// Ignore breakpoints which have already been passed
-				if(pContext->pBreakPoints[i] == UINT32_MAX)
-					continue;
+      for(i = 0; i < p_context->break_points_size_; i++)
+      {
+        // Ignore breakpoints which have already been passed
+        if(p_context->p_break_points_[i] == UINT32_MAX)
+          continue;
 
-				// Position of breakpoint in pProgram
-				uint32_t Position = pContext->pBreakPoints[i];
+        // Position of breakpoint in p_program_
+        uint32_t position = p_context->p_break_points_[i];
 
-				// Save original instruction ...
-				pContext->pBreakPointsBackup[i] = pContext->pProgram[Position];
-				// ... and overwrite with 0, causing RunBrainfuck to return at <Position>
-				pContext->pProgram[Position] = 0;
-			}
-		}
+        // Save original instruction ...
+        p_context->p_break_points_backup_[i] = p_context->p_program_[position];
+        // ... and overwrite with 0, causing RunBrainfuck to return at <position>
+        p_context->p_program_[position] = 0;
+      }
+    }
 
-		uint32_t ReturnCode = RunBrainfuck(pContext, Steps);
+    uint32_t return_code = runBrainfuck(p_context, steps);
 
-		// Program ended
-		if(ReturnCode == pContext->ProgramSize)
-		{
-			// Restore original program (in case we didn't hit a breakpoint we've set)
-			for(i = 0; i < pContext->BreakPointsSize; i++)
-			{
-				if(pContext->pBreakPoints[i] == UINT32_MAX)
-					continue;
+    // Program ended
+    if(return_code == p_context->program_size_)
+    {
+      // Restore original program (in case we didn't hit a breakpoint we've set)
+      for(i = 0; i < p_context->break_points_size_; i++)
+      {
+        if(p_context->p_break_points_[i] == UINT32_MAX)
+          continue;
 
-				uint32_t Position = pContext->pBreakPoints[i];
+        uint32_t position = p_context->p_break_points_[i];
 
-				pContext->pProgram[Position] = pContext->pBreakPointsBackup[i];
-			}
+        p_context->p_program_[position] = p_context->p_break_points_backup_[i];
+      }
 
-			free(pContext->pBreakPoints);
-			pContext->pBreakPoints = 0;
+      free(p_context->p_break_points_);
+      p_context->p_break_points_ = 0;
 
-			free(pContext->pBreakPointsBackup);
-			pContext->pBreakPointsBackup = 0;
-		}
-		else if(ReturnCode == UINT32_MAX) // Stopped because of step
-		{
-			return 0;
-		}
-		else // Stopped at breakpoint
-		{
-			uint32_t BreakPoint = 0;
-			for(i = 0; i < pContext->BreakPointsSize; i++)
-			{
-				// Find the pBreakPoints array index which made our program return ...
-				if(pContext->pBreakPoints[i] == ReturnCode)
-				{
-					BreakPoint = i;
-					break;
-				}
-			}
+      free(p_context->p_break_points_backup_);
+      p_context->p_break_points_backup_ = 0;
+    }
+    else if(return_code == UINT32_MAX) // Stopped because of step
+    {
+    	return 0;
+    }
+    else // Stopped at breakpoint
+    {
+      uint32_t break_point = 0;
+      for(i = 0; i < p_context->break_points_size_; i++)
+      {
+        // Find the p_break_points_ array index which made our program return ...
+        if(p_context->p_break_points_[i] == return_code)
+        {
+          break_point = i;
+          break;
+        }
+      }
 
-			// ... and restore the original instruction
-			pContext->pProgram[ReturnCode] = pContext->pBreakPointsBackup[BreakPoint];
-			// Delete breakpoint so we don't use it again
-			pContext->pBreakPoints[BreakPoint] = UINT32_MAX;
+      // ... and restore the original instruction
+      p_context->p_program_[return_code] = p_context->p_break_points_backup_[break_point];
+      // Delete breakpoint so we don't use it again
+      p_context->p_break_points_[break_point] = UINT32_MAX;
 
-			return 0;
-		}
-	}
-	else
-	{
-		// Stopped early because of step, don't free program
-		if(RunBrainfuck(pContext, Steps) == UINT32_MAX)
-			return 0;
-	}
+      return 0;
+    }
+  }
+  else
+  {
+    // Stopped early because of step, don't free program
+    if(runBrainfuck(p_context, steps) == UINT32_MAX)
+      return 0;
+  }
 
-	free(pContext->pProgram);
-	pContext->pProgram = 0;
-	pContext->Position = 0;
+  free(p_context->p_program_);
+  p_context->p_program_ = 0;
+  p_context->position_ = 0;
 
-	free(pContext->pJumpTable);
-	pContext->pJumpTable = 0;
+  free(p_context->p_jump_table_);
+  p_context->p_jump_table_ = 0;
 
-	return 0;
+  return 0;
 }
 
-int CMD_eval(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdEval(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(argc < 2)
-	{
-		printf("[ERR] wrong parameter count\n");
-		return 1;
-	}
+  if(argc < 2)
+  {
+    printf("[ERR] wrong parameter count\n");
+    return 1;
+  }
 
-	if(!pContext->pData)
-		BrainfuckContext_InitData(pContext);
+  if(!p_context->p_data_)
+    brainfuckContextInitData(p_context);
 
-	// Store original context
-	CBrainfuckContext OldContext;
-	memcpy(&OldContext, pContext, sizeof(CBrainfuckContext));
+  // Store original context
+  CBrainfuckContext old_context;
+  memcpy(&old_context, p_context, sizeof(CBrainfuckContext));
 
-	// load new program
-	pContext->pProgram = argv[1];
-	pContext->ProgramSize = strlen(argv[1]);
-	pContext->Position = 0;
-	pContext->pJumpTable = 0;
+  // load new program
+  p_context->p_program_ = argv[1];
+  p_context->program_size_ = strlen(argv[1]);
+  p_context->position_ = 0;
+  p_context->p_jump_table_ = 0;
 
-	BuildJumpTable(pContext->pProgram, pContext->ProgramSize, &pContext->pJumpTable);
-	RunBrainfuck(pContext, 0);
+  buildJumpTable(p_context->p_program_, p_context->program_size_, &p_context->p_jump_table_);
+  runBrainfuck(p_context, 0);
 
-	// Clean up
-	free(pContext->pJumpTable);
+  // Clean up
+  free(p_context->p_jump_table_);
 
-	// Keep data pointer position?
-	OldContext.pData = pContext->pData;
+  // Keep data pointer position?
+  old_context.p_data_ = p_context->p_data_;
 
-	// This could've changed
-	OldContext.DataSize = pContext->DataSize;
+  // This could've changed
+  old_context.data_size_ = p_context->data_size_;
 
-	// Restore original context
-	memcpy(pContext, &OldContext, sizeof(CBrainfuckContext));
+  // Restore original context
+  memcpy(p_context, &old_context, sizeof(CBrainfuckContext));
 
-	return 0;
+  return 0;
 }
 
-int CMD_break(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdBreak(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(!pContext->pProgram)
-	{
-		printf("[ERR] no program loaded\n");
-		return 1;
-	}
+  if(!p_context->p_program_)
+  {
+    printf("[ERR] no program loaded\n");
+    return 1;
+  }
 
-	if(argc < 2)
-	{
-		printf("[ERR] wrong parameter count\n");
-		return 1;
-	}
+  if(argc < 2)
+  {
+    printf("[ERR] wrong parameter count\n");
+    return 1;
+  }
 
-	long int Temp = strtol(argv[1], 0, 10);
-	if(Temp < 0 || Temp > pContext->ProgramSize)
-		return 1;
+  long int temp = strtol(argv[1], 0, 10);
+  if(temp < 0 || temp > p_context->program_size_)
+    return 1;
 
-	uint32_t BreakPoint = Temp;
-	if(!pContext->pBreakPoints)
-	{
-		pContext->BreakPointsSize = 1;
-		pContext->pBreakPoints = malloc(pContext->BreakPointsSize * sizeof(uint32_t));
-		if(!pContext->pBreakPoints)
-			error(2, "[ERR] out of memory\n");
-	}
-	else
-	{
-		// Avoid duplicate breakpoints
-		size_t i;
-		for(i = 0; i < pContext->BreakPointsSize; i++)
-		{
-			if(pContext->pBreakPoints[i] == BreakPoint)
-				return 1;
-		}
+  uint32_t break_point = temp;
+  if(!p_context->p_break_points_)
+  {
+    p_context->break_points_size_ = 1;
+    p_context->p_break_points_ = malloc(p_context->break_points_size_ * sizeof(uint32_t));
+    if(!p_context->p_break_points_)
+      error(2, "[ERR] out of memory\n");
+  }
+  else
+  {
+    // Avoid duplicate breakpoints
+    size_t i;
+    for(i = 0; i < p_context->break_points_size_; i++)
+    {
+      if(p_context->p_break_points_[i] == break_point)
+        return 1;
+    }
 
-		if(pContext->pBreakPointsBackup)
-		{
-			// Restore original program first
-			for(i = 0; i < pContext->BreakPointsSize; i++)
-			{
-				if(pContext->pBreakPoints[i] == UINT32_MAX)
-					continue;
+    if(p_context->p_break_points_backup_)
+    {
+      // Restore original program first
+      for(i = 0; i < p_context->break_points_size_; i++)
+      {
+        if(p_context->p_break_points_[i] == UINT32_MAX)
+          continue;
 
-				uint32_t Position = pContext->pBreakPoints[i];
+        uint32_t position = p_context->p_break_points_[i];
 
-				pContext->pProgram[Position] = pContext->pBreakPointsBackup[i];
-			}
+        p_context->p_program_[position] = p_context->p_break_points_backup_[i];
+      }
 
-			// reset pBreakPointsBackup so CMD_run builds it again and etc.
-			free(pContext->pBreakPointsBackup);
-			pContext->pBreakPointsBackup = 0;
-		}
+      // reset p_break_points_backup_ so CMD_run builds it again and etc.
+      free(p_context->p_break_points_backup_);
+      p_context->p_break_points_backup_ = 0;
+    }
 
-		// Allocate memory for new breakpoint
-		pContext->BreakPointsSize += 1;
-		void *pAlloc = realloc(pContext->pBreakPoints, pContext->BreakPointsSize * sizeof(uint32_t));
-		if(!pAlloc)
-			error(2, "[ERR] out of memory\n");
+    // Allocate memory for new breakpoint
+    p_context->break_points_size_ += 1;
+    void *p_alloc = realloc(p_context->p_break_points_, p_context->break_points_size_ * sizeof(uint32_t));
+    if(!p_alloc)
+      error(2, "[ERR] out of memory\n");
 
-		pContext->pBreakPoints = pAlloc;
-	}
+    p_context->p_break_points_ = p_alloc;
+  }
 
-	pContext->pBreakPoints[pContext->BreakPointsSize - 1] = BreakPoint;
+  p_context->p_break_points_[p_context->break_points_size_ - 1] = break_point;
 
-	return 0;
+  return 0;
 }
 
-int CMD_step(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdStep(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(!pContext->pProgram)
-	{
-		printf("[ERR] no program loaded\n");
-		return 1;
-	}
+  if(!p_context->p_program_)
+  {
+    printf("[ERR] no program loaded\n");
+    return 1;
+  }
 
-	size_t Steps = 1;
-	if(argc >= 2)
-	{
-		long int Temp = strtol(argv[1], 0, 10);
-		if(Temp <= 0)
-			return 1;
+  uint32_t steps = 1;
+  if(argc >= 2)
+  {
+    long int temp = strtol(argv[1], 0, 10);
+    if(temp <= 0)
+      return 1;
 
-		Steps = Temp;
-	}
+    if(temp >= p_context->program_size_)
+      return cmdRun(p_context, 0, 0);
 
-	return CMD_run(pContext, -1, (void *)&Steps);
+    steps = temp;
+  }
+
+  return cmdRun(p_context, -1, (void *)&steps);
 }
 
-int CMD_memory(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdMemory(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(!pContext->pData)
-	{
-		printf("[ERR] no program loaded\n");
-		return 1;
-	}
+  if(!p_context->p_data_)
+  {
+    printf("[ERR] no program loaded\n");
+    return 1;
+  }
 
-	int Position = pContext->pData - pContext->pDataStart;
-	enum ETypes
-	{
-		TYPE_HEX,
-		TYPE_INT,
-		TYPE_BIN,
-		TYPE_CHAR
-	} Type;
-	Type = TYPE_HEX;
+  int position = p_context->p_data_ - p_context->p_data_start_;
+  enum ETypes
+  {
+    TYPE_HEX,
+    TYPE_INT,
+    TYPE_BIN,
+    TYPE_CHAR
+  } Type;
+  Type = TYPE_HEX;
 
-	if(argc >= 2)
-	{
-		char *pNext;
-		int Temp = strtol(argv[1], &pNext, 10);
+  if(argc >= 2)
+  {
+    char *p_next;
+    int temp = strtol(argv[1], &p_next, 10);
 
-		// Not a numerical input, asume type (convenience)
-		if(pNext == argv[1] || *pNext != 0)
-		{
-			if(!strcasecmp(argv[1], "hex"))
-				Type = TYPE_HEX;
-			else if(!strcasecmp(argv[1], "int"))
-				Type = TYPE_INT;
-			else if(!strcasecmp(argv[1], "bin"))
-				Type = TYPE_BIN;
-			else if(!strcasecmp(argv[1], "char"))
-				Type = TYPE_CHAR;
-		}
-		else
-		{
-			if(Temp >= pContext->DataSize || Temp < 0)
-				return 1;
+    // Not a numerical input, asume type (convenience)
+    if(p_next == argv[1] || *p_next != 0)
+    {
+      if(!strcasecmp(argv[1], "hex"))
+        Type = TYPE_HEX;
+      else if(!strcasecmp(argv[1], "int"))
+        Type = TYPE_INT;
+      else if(!strcasecmp(argv[1], "bin"))
+        Type = TYPE_BIN;
+      else if(!strcasecmp(argv[1], "char"))
+        Type = TYPE_CHAR;
+    }
+    else
+    {
+      if(temp >= p_context->data_size_ || temp < 0)
+        return 1;
 
-			Position = Temp;
-		}
-	}
+      position = temp;
+    }
+  }
 
-	if(argc >= 3)
-	{
-		if(!strcasecmp(argv[2], "hex"))
-			Type = TYPE_HEX;
-		else if(!strcasecmp(argv[2], "int"))
-			Type = TYPE_INT;
-		else if(!strcasecmp(argv[2], "bin"))
-			Type = TYPE_BIN;
-		else if(!strcasecmp(argv[2], "char"))
-			Type = TYPE_CHAR;
-	}
+  if(argc >= 3)
+  {
+    if(!strcasecmp(argv[2], "hex"))
+      Type = TYPE_HEX;
+    else if(!strcasecmp(argv[2], "int"))
+      Type = TYPE_INT;
+    else if(!strcasecmp(argv[2], "bin"))
+      Type = TYPE_BIN;
+    else if(!strcasecmp(argv[2], "char"))
+      Type = TYPE_CHAR;
+  }
 
-	unsigned char *pData = pContext->pDataStart + Position;
-	switch(Type)
-	{
-		case TYPE_HEX:
-		{
-			printf("Hex at %d: %x\n", Position, *pData);
-		} break;
-		case TYPE_INT:
-		{
-			printf("Integer at %d: %d\n", Position, *pData);
-		} break;
-		case TYPE_BIN:
-		{
-			char aBuf[16];
-			char *pBuf = aBuf;
+  unsigned char *p_data = p_context->p_data_start_ + position;
+  switch(Type)
+  {
+    case TYPE_HEX:
+    {
+      printf("Hex at %d: %x\n", position, *p_data);
+    } break;
+    case TYPE_INT:
+    {
+      printf("Integer at %d: %d\n", position, *p_data);
+    } break;
+    case TYPE_BIN:
+    {
+      char a_buf[16];
+      char *p_buf = a_buf;
 
-			size_t i;
-			for(i = 128; i > 0; i >>= 1)
-				*(pBuf++) = ((*pData & i) == i) ? '1' : '0';
-			*pBuf = 0;
+      size_t i;
+      for(i = 128; i > 0; i >>= 1)
+        *(p_buf++) = ((*p_data & i) == i) ? '1' : '0';
+      *p_buf = 0;
 
-			printf("Binary at %d: %s\n", Position, aBuf);
-		} break;
-		case TYPE_CHAR:
-		{
-			printf("Char at %d: %c\n", Position, *pData);
-		} break;
-	}
+      printf("Binary at %d: %s\n", position, a_buf);
+    } break;
+    case TYPE_CHAR:
+    {
+      printf("Char at %d: %c\n", position, *p_data);
+    } break;
+  }
 
-	return 0;
+  return 0;
 }
 
-int CMD_show(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdShow(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(!pContext->pProgram)
-	{
-		printf("[ERR] no program loaded\n");
-		return 1;
-	}
+  if(!p_context->p_program_)
+  {
+    printf("[ERR] no program loaded\n");
+    return 1;
+  }
 
-	size_t Size = 10;
-	if(argc >= 2)
-	{
-		long int Temp = strtol(argv[1], 0, 10);
-		if(Temp <= 0)
-			return 1;
-		Size = Temp;
-	}
+  size_t size = 10;
+  if(argc >= 2)
+  {
+    long int temp = strtol(argv[1], 0, 10);
+    if(temp <= 0)
+      return 1;
+    size = temp;
+  }
 
-	size_t i;
-	// Restore original program first
-	for(i = 0; i < pContext->BreakPointsSize; i++)
-	{
-		if(pContext->pBreakPoints[i] == UINT32_MAX)
-			continue;
+  size_t i;
+  // Restore original program first
+  for(i = 0; i < p_context->break_points_size_; i++)
+  {
+    if(p_context->p_break_points_[i] == UINT32_MAX)
+      continue;
 
-		uint32_t Position = pContext->pBreakPoints[i];
+    uint32_t position = p_context->p_break_points_[i];
 
-		pContext->pProgram[Position] = pContext->pBreakPointsBackup[i];
-	}
+    p_context->p_program_[position] = p_context->p_break_points_backup_[i];
+  }
 
-	// Print <Size> amount of characters
-	printf("%.*s\n", Size, &pContext->pProgram[pContext->Position]);
+  // Print <size> amount of characters
+  printf("%.*s\n", size, &p_context->p_program_[p_context->position_]);
 
-	// Restore breakpoints again
-	for(i = 0; i < pContext->BreakPointsSize; i++)
-	{
-		if(pContext->pBreakPoints[i] == UINT32_MAX)
-			continue;
+  // Restore breakpoints again
+  for(i = 0; i < p_context->break_points_size_; i++)
+  {
+    if(p_context->p_break_points_[i] == UINT32_MAX)
+      continue;
 
-		uint32_t Position = pContext->pBreakPoints[i];
+    uint32_t position = p_context->p_break_points_[i];
 
-		pContext->pProgram[Position] = 0;
-	}
+    p_context->p_program_[position] = 0;
+  }
 
-	return 0;
+  return 0;
 }
 
-int CMD_change(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdChange(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(!pContext->pData)
-	{
-		printf("[ERR] no program loaded\n");
-		return 1;
-	}
+  if(!p_context->p_data_)
+  {
+    printf("[ERR] no program loaded\n");
+    return 1;
+  }
 
-	int Position = pContext->pData - pContext->pDataStart;
-	unsigned char Value = 0x00;
+  int position = p_context->p_data_ - p_context->p_data_start_;
+  unsigned char value = 0x00;
 
-	if(argc >= 2)
-		Position = strtol(argv[1], 0, 10);
+  if(argc >= 2)
+    position = strtol(argv[1], 0, 10);
 
-	if(argc >= 3)
-		Value = strtol(argv[2], 0, 16);
+  if(argc >= 3)
+    value = strtol(argv[2], 0, 16);
 
-	unsigned char *pData = pContext->pDataStart + Position;
+  unsigned char *p_data = p_context->p_data_start_ + position;
 
-	*pData = Value;
+  *p_data = value;
 
-	return 0;
+  return 0;
 }
 
-int CMD_quit(CBrainfuckContext *pContext, int argc, char *argv[])
+int cmdQuit(CBrainfuckContext *p_context, int argc, char **argv)
 {
-	if(pContext->pProgram)
-		free(pContext->pProgram);
-	if(pContext->pDataStart)
-		free(pContext->pDataStart);
-	if(pContext->pJumpTable)
-		free(pContext->pJumpTable);
-	if(pContext->pBreakPoints)
-		free(pContext->pBreakPoints);
+  if(p_context->p_program_)
+    free(p_context->p_program_);
+  if(p_context->p_data_start_)
+    free(p_context->p_data_start_);
+  if(p_context->p_jump_table_)
+    free(p_context->p_jump_table_);
+  if(p_context->p_break_points_)
+    free(p_context->p_break_points_);
 
-	if(argc)
-		printf("Bye.\n");
-	exit(0);
+  if(argc)
+    printf("Bye.\n");
+  exit(0);
 }
 
-int CommandLine(CBrainfuckContext *pContext, CCommand *pCommand, char *pLine)
+int commandLine(CBrainfuckContext *p_context, CCommand *p_command, char *p_line)
 {
-	char *apArgv[16] = {0};
-	int Argc = 0;
-	char Found = 1;
-	char InString = 0;
+  char *ap_argv[16] = {0};
+  int argc = 0;
+  char found = 1;
+  char in_string = 0;
 
-	while(*pLine)
-	{
-		if(*pLine == '"' && *(pLine - 1) != '\\')
-		{
-			*pLine = 0;
-			InString ^= 1;
-			if(InString)
-			{
-				pLine++;
-				Found = 1;
-			}
-		}
+  while(*p_line)
+  {
+    if(*p_line == '"' && *(p_line - 1) != '\\')
+    {
+      *p_line = 0;
+      in_string ^= 1;
+      if(in_string)
+      {
+        p_line++;
+        found = 1;
+      }
+    }
 
-		if((*pLine == ' ' || *pLine == '\t') && !InString)
-		{
-			*pLine = 0;
-			Found = 1;
-		}
-		else if(Found)
-		{
-			if(Argc < sizeof(apArgv)/sizeof(*apArgv))
-			{
-				apArgv[Argc++] = pLine;
-				Found = 0;
-			}
-			else // ignore additional parameters
-				break;
-		}
-		pLine++;
-	}
+    if((*p_line == ' ' || *p_line == '\t') && !in_string)
+    {
+      *p_line = 0;
+      found = 1;
+    }
+    else if(found)
+    {
+      if(argc < sizeof(ap_argv)/sizeof(*ap_argv))
+      {
+        ap_argv[argc++] = p_line;
+        found = 0;
+      }
+      else // ignore additional parameters
+        break;
+    }
+    p_line++;
+  }
 
-	if(Argc)
-	{
-		while(pCommand->pCmd)
-		{
-			if(!strcasecmp(apArgv[0], pCommand->pCmd))
-				return pCommand->pfnCmd(pContext, Argc, apArgv);
+  if(argc)
+  {
+    while(p_command->p_cmd_)
+    {
+      if(!strcasecmp(ap_argv[0], p_command->p_cmd_))
+        return p_command->pfn_cmd_(p_context, argc, ap_argv);
 
-			pCommand++;
-		}
-	}
+      p_command++;
+    }
+  }
 
-	return -1;
+  return -1;
 }
 /* Console */
 
-size_t LoadProgram(const char *pFilename, char **ppProgram)
+size_t loadProgram(const char *p_filename, char **pp_program)
 {
-	char *pFileData;
-	FILE *pFile;
-	pFile = fopen(pFilename, "rb");
-	if(!pFile)
-	{
-		error(4, "[ERR] reading the file failed\n");
-		return 0;
-	}
+  char *p_file_data;
+  FILE *p_file;
+  p_file = fopen(p_filename, "rb");
+  if(!p_file)
+  {
+    error(4, "[ERR] reading the file failed\n");
+    return 0;
+  }
 
-	size_t FileSize;
-	fseek(pFile, 0, SEEK_END);
-	FileSize = ftell(pFile);
-	fseek(pFile, 0, SEEK_SET);
+  size_t file_size;
+  fseek(p_file, 0, SEEK_END);
+  file_size = ftell(p_file);
+  fseek(p_file, 0, SEEK_SET);
 
-	pFileData = malloc(FileSize + 1);
-	if(!pFileData)
-		error(2, "[ERR] out of memory\n");
+  p_file_data = malloc(file_size + 1);
+  if(!p_file_data)
+    error(2, "[ERR] out of memory\n");
 
-	fread(pFileData, 1, FileSize, pFile),
-	fclose(pFile);
+  fread(p_file_data, 1, file_size, p_file),
+  fclose(p_file);
 
-	// Assure null-termination
-	pFileData[FileSize] = 0;
+  // Assure null-termination
+  p_file_data[file_size] = 0;
 
-	// Count valid brainfuck characters
-	size_t RealLength = 0;
-	size_t i;
-	for(i = 0; i < FileSize; i++)
-	{
-		switch(pFileData[i])
-		{
-			case '>':
-			case '<':
-			case '+':
-			case '-':
-			case '.':
-			case ',':
-			case '[':
-			case ']':
-			{
-				RealLength++;
-			} break;
-		}
-	}
+  // Count valid brainfuck characters
+  size_t real_length = 0;
+  size_t i;
+  for(i = 0; i < file_size; i++)
+  {
+    switch(p_file_data[i])
+    {
+      case '>':
+      case '<':
+      case '+':
+      case '-':
+      case '.':
+      case ',':
+      case '[':
+      case ']':
+      {
+        real_length++;
+      } break;
+    }
+  }
 
-	// Allocate memory for the filtered code
-	char *pProgram = malloc(RealLength + 1);
-	if(!pProgram)
-		error(2, "[ERR] out of memory\n");
+  // Allocate memory for the filtered code
+  char *p_program = malloc(real_length + 1);
+  if(!p_program)
+    error(2, "[ERR] out of memory\n");
 
-	// And copy only the valid characters
-	size_t j;
-	for(i = 0, j = 0; i < FileSize; i++)
-	{
-		switch(pFileData[i])
-		{
-			case '>':
-			case '<':
-			case '+':
-			case '-':
-			case '.':
-			case ',':
-			case '[':
-			case ']':
-			{
-				pProgram[j++] = pFileData[i];
-			} break;
-		}
-	}
+  // And copy only the valid characters
+  size_t j;
+  for(i = 0, j = 0; i < file_size; i++)
+  {
+    switch(p_file_data[i])
+    {
+      case '>':
+      case '<':
+      case '+':
+      case '-':
+      case '.':
+      case ',':
+      case '[':
+      case ']':
+      {
+        p_program[j++] = p_file_data[i];
+      } break;
+    }
+  }
 
-	// Assure null-termination
-	pProgram[RealLength] = 0;
+  // Assure null-termination
+  p_program[real_length] = 0;
 
-	free(pFileData);
+  free(p_file_data);
 
-	*ppProgram = pProgram;
+  *pp_program = p_program;
 
-	return RealLength;
+  return real_length;
 }
 
-void BrainfuckContext_Init(CBrainfuckContext *pContext, char *pProgram, uint32_t *pJumpTable)
+void brainfuckContextInit(CBrainfuckContext *p_context, char *p_program, uint32_t *p_jump_table)
 {
-	memset(pContext, 0, sizeof(CBrainfuckContext));
-	pContext->pProgram = pProgram;
+  memset(p_context, 0, sizeof(CBrainfuckContext));
+  p_context->p_program_ = p_program;
 
-	pContext->pData = 0;
-	pContext->pDataStart = 0;
-	pContext->DataAllocSize = 1024;
-	pContext->DataSize = 0;
+  p_context->p_data_ = 0;
+  p_context->p_data_start_ = 0;
+  p_context->data_alloc_size_ = 1024;
+  p_context->data_size_ = 0;
 
-	pContext->pJumpTable = pJumpTable;
-	pContext->pBreakPoints = 0;
-	pContext->BreakPointsSize = 0;
-	pContext->pBreakPointsBackup = 0;
+  p_context->p_jump_table_ = p_jump_table;
+  p_context->p_break_points_ = 0;
+  p_context->break_points_size_ = 0;
+  p_context->p_break_points_backup_ = 0;
 }
 
-void BrainfuckContext_InitData(CBrainfuckContext *pContext)
+void brainfuckContextInitData(CBrainfuckContext *p_context)
 {
-	pContext->pDataStart = malloc(pContext->DataAllocSize);
-	pContext->DataSize = pContext->DataAllocSize;
-	pContext->pData = pContext->pDataStart;
-	memset(pContext->pData, 0, pContext->DataSize);
+  p_context->p_data_start_ = malloc(p_context->data_alloc_size_);
+  p_context->data_size_ = p_context->data_alloc_size_;
+  p_context->p_data_ = p_context->p_data_start_;
+  memset(p_context->p_data_, 0, p_context->data_size_);
 
-	if(!pContext->pData)
-		error(2, "[ERR] out of memory\n");
+  if(!p_context->p_data_)
+    error(2, "[ERR] out of memory\n");
 }
 
 #ifdef BONUS
-unsigned char *JITCompileBrainfuck(char *pBuf, size_t Length, size_t *pProgramAllocSize)
+unsigned char *jitCompileBrainfuck(char *p_buf, size_t length, size_t *p_program_alloc_size)
 {
-	CStack Stack;
-	CStack *pStack = &Stack;
-	Stack_Init(pStack, 32);
+  CStack stack;
+  CStack *p_stack = &stack;
+  stackInit(p_stack, 32);
 
-	unsigned char aInstpDataInc[] = {
-		// add  edx, 1
-		0x81, 0xC2, 0x01, 0x00, 0x00, 0x00
-	};
-	unsigned char aInstpDataDec[] = {
-		// sub  edx, 1
-		0x81, 0xEA, 0x01, 0x00, 0x00, 0x00
-	};
-	unsigned char aInstDataAdd[] = {
-		// add  BYTE PTR [edx], 1
-		0x80, 0x02, 0x01
-	};
-	unsigned char aInstDataSub[] = {
-		// sub  BYTE PTR [edx], 1
-		0x80, 0x2A, 0x01
-	};
-	unsigned char aInstDataNull[] = {
-		// mov  BYTE PTR [edx], 0
-		0xC6, 0x02, 0x00
-	};
-	unsigned char aInstPrintData[] = {
-		// pusha ; save all general registers on stack
-		0x60,
-		// mov  ecx, edx ; pointer to data
-		0x89, 0xD1,
-		// mov  edx, 1 ; message length
-		0xBA, 0x01, 0x00, 0x00, 0x00,
-		// mov  ebx, 1 ; file descriptor (stdout)
-		0xBB, 0x01, 0x00, 0x00, 0x00,
-		// mov  eax, 4 ; system call number (sys_write)
-		0xB8, 0x04, 0x00, 0x00, 0x00,
-		// int  0x80 ; syscall
-		0xCD, 0x80,
-		// popa ; restore all general registers from stack
-		0x61
-	};
-	unsigned char aInstJump[] = {
-		// jmp  <relative addr>
-		0xE9, 0x00, 0x00, 0x00, 0x00
-	};
-	unsigned char aInstCondJump[] = {
-		// cmp  BYTE PTR [edx], 0
-		0x80, 0x3A, 0x00,
-		// jne
-		0x0F, 0x85, 0x00, 0x00, 0x00, 0x00
-	};
-	unsigned char aInstReturnNormal[] = {
-		// mov  eax, 0 ; return with 0
-		0xB8, 0x00, 0x00, 0x00, 0x00,
-		// retn
-		0xC3
-	};
+  unsigned char a_inst_p_data_add[] = {
+    // add  edx, 1
+    0x81, 0xC2, 0x01, 0x00, 0x00, 0x00
+  };
+  unsigned char a_inst_p_data_sub[] = {
+    // sub  edx, 1
+    0x81, 0xEA, 0x01, 0x00, 0x00, 0x00
+  };
+  unsigned char a_inst_data_add[] = {
+    // add  BYTE PTR [edx], 1
+    0x80, 0x02, 0x01
+  };
+  unsigned char a_inst_data_sub[] = {
+    // sub  BYTE PTR [edx], 1
+    0x80, 0x2A, 0x01
+  };
+  unsigned char a_inst_data_null[] = {
+    // mov  BYTE PTR [edx], 0
+    0xC6, 0x02, 0x00
+  };
+  unsigned char a_inst_print_data[] = {
+    // pusha ; save all general registers on stack
+    0x60,
+    // mov  ecx, edx ; pointer to data
+    0x89, 0xD1,
+    // mov  edx, 1 ; message length
+    0xBA, 0x01, 0x00, 0x00, 0x00,
+    // mov  ebx, 1 ; file descriptor (stdout)
+    0xBB, 0x01, 0x00, 0x00, 0x00,
+    // mov  eax, 4 ; system call number (sys_write)
+    0xB8, 0x04, 0x00, 0x00, 0x00,
+    // int  0x80 ; syscall
+    0xCD, 0x80,
+    // popa ; restore all general registers from stack
+    0x61
+  };
+  unsigned char a_inst_jump[] = {
+    // jmp  <relative addr>
+    0xE9, 0x00, 0x00, 0x00, 0x00
+  };
+  unsigned char a_inst_cond_jump[] = {
+    // cmp  BYTE PTR [edx], 0
+    0x80, 0x3A, 0x00,
+    // jne
+    0x0F, 0x85, 0x00, 0x00, 0x00, 0x00
+  };
+  unsigned char a_inst_return_normal[] = {
+    // mov  eax, 0 ; return with 0
+    0xB8, 0x00, 0x00, 0x00, 0x00,
+    // retn
+    0xC3
+  };
 
-	size_t ProgramSize = 0;
-	// Align to memory page
-	size_t ProgramAllocSize = (Length + MEMPAGESIZE) & MEMPAGEMASK;
+  size_t program_size = 0;
+  // Align to memory page
+  size_t program_alloc_size = (length + MEMPAGESIZE) & MEMPAGEMASK;
 
-	unsigned char *pProgram = mmap(0, ProgramAllocSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if(pProgram == MAP_FAILED)
-		error(2, "[ERR] out of memory\n");
+  unsigned char *p_program = mmap(0, program_alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if(p_program == MAP_FAILED)
+    error(2, "[ERR] out of memory\n");
 
-	// translate into x86 instructions and optimize
-	size_t i;
-	for(i = 0; i < Length; i++)
-	{
-		switch(pBuf[i])
-		{
-			case '>':
-			{
-				if(pBuf[i - 1] == '>')
-					pProgram[ProgramSize - 4] += 1;
-				else
-				{
-					memcpy(&pProgram[ProgramSize], aInstpDataInc, sizeof(aInstpDataInc));
-					ProgramSize += sizeof(aInstpDataInc);
-				}
-			} break;
-			case '<':
-			{
-				if(pBuf[i - 1] == '<')
-					pProgram[ProgramSize - 4] += 1;
-				else
-				{
-					memcpy(&pProgram[ProgramSize], aInstpDataDec, sizeof(aInstpDataDec));
-					ProgramSize += sizeof(aInstpDataDec);
-				}
-			} break;
-			case '+':
-			{
-				if(pBuf[i - 1] == '+')
-					pProgram[ProgramSize - 1] += 1;
-				else
-				{
-					memcpy(&pProgram[ProgramSize], aInstDataAdd, sizeof(aInstDataAdd));
-					ProgramSize += sizeof(aInstDataAdd);
-				}
-			} break;
-			case '-':
-			{
-				if(pBuf[i - 1] == '-')
-					pProgram[ProgramSize - 1] += 1;
-				else
-				{
-					memcpy(&pProgram[ProgramSize], aInstDataSub, sizeof(aInstDataSub));
-					ProgramSize += sizeof(aInstDataSub);
-				}
-			} break;
-			case '.':
-			{
-				memcpy(&pProgram[ProgramSize], aInstPrintData, sizeof(aInstPrintData));
-				ProgramSize += sizeof(aInstPrintData);
-			} break;
-			case ',':
-			{
-				// not implemented - who uses this anyways
-			} break;
-			case '[':
-			{
-				if(pBuf[i + 1] == '-' && pBuf[i + 2] == ']')
-				{
-					memcpy(&pProgram[ProgramSize], aInstDataNull, sizeof(aInstDataNull));
-					ProgramSize += sizeof(aInstDataNull);
-					i += 2;
-				}
-				else
-				{
-					memcpy(&pProgram[ProgramSize], aInstJump, sizeof(aInstJump));
-					ProgramSize += sizeof(aInstJump);
+  // translate into x86 instructions and optimize
+  size_t i;
+  for(i = 0; i < length; i++)
+  {
+    switch(p_buf[i])
+    {
+      case '>':
+      {
+        if(p_buf[i - 1] == '>')
+          p_program[program_size - 4] += 1;
+        else
+        {
+          memcpy(&p_program[program_size], a_inst_p_data_add, sizeof(a_inst_p_data_add));
+          program_size += sizeof(a_inst_p_data_add);
+        }
+      } break;
+      case '<':
+      {
+        if(p_buf[i - 1] == '<')
+          p_program[program_size - 4] += 1;
+        else
+        {
+          memcpy(&p_program[program_size], a_inst_p_data_sub, sizeof(a_inst_p_data_sub));
+          program_size += sizeof(a_inst_p_data_sub);
+        }
+      } break;
+      case '+':
+      {
+        if(p_buf[i - 1] == '+')
+          p_program[program_size - 1] += 1;
+        else
+        {
+          memcpy(&p_program[program_size], a_inst_data_add, sizeof(a_inst_data_add));
+          program_size += sizeof(a_inst_data_add);
+        }
+      } break;
+      case '-':
+      {
+        if(p_buf[i - 1] == '-')
+          p_program[program_size - 1] += 1;
+        else
+        {
+          memcpy(&p_program[program_size], a_inst_data_sub, sizeof(a_inst_data_sub));
+          program_size += sizeof(a_inst_data_sub);
+        }
+      } break;
+      case '.':
+      {
+        memcpy(&p_program[program_size], a_inst_print_data, sizeof(a_inst_print_data));
+        program_size += sizeof(a_inst_print_data);
+      } break;
+      case ',':
+      {
+        // not implemented - who uses this anyways
+      } break;
+      case '[':
+      {
+        if(p_buf[i + 1] == '-' && p_buf[i + 2] == ']')
+        {
+          memcpy(&p_program[program_size], a_inst_data_null, sizeof(a_inst_data_null));
+          program_size += sizeof(a_inst_data_null);
+          i += 2;
+        }
+        else
+        {
+          memcpy(&p_program[program_size], a_inst_jump, sizeof(a_inst_jump));
+          program_size += sizeof(a_inst_jump);
 
-					// relative jump to the next instruction
-					Stack_Push(pStack, ProgramSize);
-				}
-			} break;
-			case ']':
-			{
-				size_t Jump = Stack_Pop(pStack);
-				if(Jump == SIZE_MAX)
-					error(3, "[ERR] parsing of input failed\n");
+          // relative jump to the next instruction
+          stackPush(p_stack, program_size);
+        }
+      } break;
+      case ']':
+      {
+        size_t jump = stackPop(p_stack);
+        if(jump == SIZE_MAX)
+          error(3, "[ERR] parsing of input failed\n");
 
-				memcpy(&pProgram[ProgramSize], aInstCondJump, sizeof(aInstCondJump));
+        memcpy(&p_program[program_size], a_inst_cond_jump, sizeof(a_inst_cond_jump));
 
-				uint32_t RelativeJmpAddr;
+        uint32_t relative_jmp_addr;
 
-				// jump to ']' from '['
-				RelativeJmpAddr = ProgramSize - Jump;
-				memcpy(&pProgram[Jump - 4], &RelativeJmpAddr, 4);
+        // jump to ']' from '['
+        relative_jmp_addr = program_size - jump;
+        memcpy(&p_program[jump - 4], &relative_jmp_addr, 4);
 
-				ProgramSize += sizeof(aInstCondJump);
+        program_size += sizeof(a_inst_cond_jump);
 
-				// conditional jump back to '[' from ']'
-				RelativeJmpAddr = ProgramSize - Jump;
-				RelativeJmpAddr *= -1;
-				memcpy(&pProgram[ProgramSize - 4], &RelativeJmpAddr, 4);
+        // conditional jump back to '[' from ']'
+        relative_jmp_addr = program_size - jump;
+        relative_jmp_addr *= -1;
+        memcpy(&p_program[program_size - 4], &relative_jmp_addr, 4);
 
-			} break;
-		}
+      } break;
+    }
 
-		if(ProgramAllocSize - ProgramSize <= sizeof(aInstPrintData))
-		{
-			// This works because our jumps are relative
-			void *pAlloc = mremap(pProgram, ProgramAllocSize, ProgramAllocSize + MEMPAGESIZE, MREMAP_MAYMOVE);
-			if(pAlloc == MAP_FAILED) // this could be anything, need to check errno...
-				error(2, "[ERR] out of memory\n");
+    if(program_alloc_size - program_size <= sizeof(a_inst_print_data))
+    {
+      // This works because our jumps are relative
+      void *p_alloc = mremap(p_program, program_alloc_size, program_alloc_size + MEMPAGESIZE, MREMAP_MAYMOVE);
+      if(p_alloc == MAP_FAILED) // this could be anything, need to check errno...
+        error(2, "[ERR] out of memory\n");
 
-			ProgramAllocSize += MEMPAGESIZE;
-			pProgram = pAlloc;
-		}
-	}
+      program_alloc_size += MEMPAGESIZE;
+      p_program = p_alloc;
+    }
+  }
 
-	// '[' ']' derp
-	if(Stack.Size)
-		error(3, "[ERR] parsing of input failed\n");
+  // '[' ']' derp
+  if(stack.size_)
+    error(3, "[ERR] parsing of input failed\n");
 
-	Stack_Destroy(pStack);
+  stackDestroy(p_stack);
 
-	// clean return
-	memcpy(&pProgram[ProgramSize], aInstReturnNormal, sizeof(aInstReturnNormal));
-	ProgramSize += sizeof(aInstReturnNormal);
+  // clean return
+  memcpy(&p_program[program_size], a_inst_return_normal, sizeof(a_inst_return_normal));
+  program_size += sizeof(a_inst_return_normal);
 
-	*pProgramAllocSize = ProgramAllocSize;
+  *p_program_alloc_size = program_alloc_size;
 
-	// make executable
-	mprotect(pProgram, ProgramAllocSize, PROT_READ | PROT_EXEC);
+  // make executable
+  mprotect(p_program, program_alloc_size, PROT_READ | PROT_EXEC);
 
-	return pProgram;
+  return p_program;
 }
 #endif
 
-int BuildJumpTable(char *pBuf, size_t Length, uint32_t **ppJumpTable)
+int buildJumpTable(char *p_buf, size_t length, uint32_t **pp_jump_table)
 {
-	CStack Stack;
-	CStack *pStack = &Stack;
+  CStack stack;
+  CStack *p_stack = &stack;
 
-	size_t OpenBracketSize = 0;
-	size_t ClosedBracketSize = 0;
-	size_t LastBracket = 0;
+  size_t open_bracket_size = 0;
+  size_t closed_bracket_size = 0;
+  size_t last_bracket = 0;
 
-	// Count '[' and ']' in the program
-	// Also remember the last ']' to make memory usage a bit better
-	size_t i;
-	for(i = 0; i < Length; i++)
-	{
-		switch(pBuf[i])
-		{
-			case '[':
-			{
-				OpenBracketSize++;
-			} break;
-			case ']':
-			{
-				ClosedBracketSize++;
-				LastBracket = i;
-			} break;
-		}
-	}
-	LastBracket++;
+  // Count '[' and ']' in the program
+  // Also remember the last ']' to make memory usage a bit better
+  size_t i;
+  for(i = 0; i < length; i++)
+  {
+    switch(p_buf[i])
+    {
+      case '[':
+      {
+        open_bracket_size++;
+      } break;
+      case ']':
+      {
+        closed_bracket_size++;
+        last_bracket = i;
+      } break;
+    }
+  }
+  last_bracket++;
 
-	if(OpenBracketSize != ClosedBracketSize)
-	{
-		error(3, "[ERR] parsing of input failed\n");
-		return 1;
-	}
+  if(open_bracket_size != closed_bracket_size)
+  {
+    error(3, "[ERR] parsing of input failed\n");
+    return 1;
+  }
 
-	uint32_t *pJumpTable = malloc(LastBracket * sizeof(uint32_t));
-	if(!pJumpTable)
-		error(2, "[ERR] out of memory\n");
+  uint32_t *p_jump_table = malloc(last_bracket * sizeof(uint32_t));
+  if(!p_jump_table)
+    error(2, "[ERR] out of memory\n");
 
-	memset(pJumpTable, 0, LastBracket * sizeof(uint32_t));
+  memset(p_jump_table, 0, last_bracket * sizeof(uint32_t));
 
-	Stack_Init(pStack, 32);
+  stackInit(p_stack, 32);
 
-	for(i = 0; i < Length; i++)
-	{
-		switch(pBuf[i])
-		{
-			case '[':
-			{
-				// Push position of '[' onto stack
-				// This will be pop'd later at the corresponding ']'
-				Stack_Push(pStack, i);
-			} break;
-			case ']':
-			{
-				uint32_t Jump = Stack_Pop(pStack);
+  for(i = 0; i < length; i++)
+  {
+    switch(p_buf[i])
+    {
+      case '[':
+      {
+        // Push position of '[' onto stack
+        // This will be pop'd later at the corresponding ']'
+        stackPush(p_stack, i);
+      } break;
+      case ']':
+      {
+        uint32_t jump = stackPop(p_stack);
 
-				// '[' jumps to previously push'd ']' position
-				pJumpTable[i] = Jump;
-				// previously push'd '[' jumps to this ']'
-				pJumpTable[Jump] = i;
-			} break;
-		}
-	}
+        // '[' jumps to previously push'd ']' position
+        p_jump_table[i] = jump;
+        // previously push'd '[' jumps to this ']'
+        p_jump_table[jump] = i;
+      } break;
+    }
+  }
 
-	Stack_Destroy(pStack);
+  stackDestroy(p_stack);
 
-	*ppJumpTable = pJumpTable;
+  *pp_jump_table = p_jump_table;
 
-	return 0;
+  return 0;
 }
 
 // This is so horrible, I'm sorry :(((
 // But duplicating code is forbidden, goto is forbidden
 // I was left with no other choice D:
-// (except for sacrificing performance obv. :p)
+// (except sacrificing performance obv. :p)
 #define MACRO_RUN_BRAINFUCK_FUNC() \
-	switch(pProgram[Position]) \
-	{ \
-		case '>': \
-		{ \
-			pData++; \
+  switch(*p_program) \
+  { \
+    case '>': \
+    { \
+      p_data++; \
  \
-			/* Boundary overflow check */ \
-			if(pData >= pDataEnd) \
-			{ \
-				pContext->DataSize += pContext->DataAllocSize; \
-				void *pAlloc = realloc(pContext->pDataStart, pContext->DataSize); \
-				if(!pAlloc) \
-					error(2, "[ERR] out of memory\n"); \
+      /* Boundary overflow check */ \
+      if(p_data >= p_data_end) \
+      { \
+        p_context->data_size_ += p_context->data_alloc_size_; \
+        void *p_alloc = realloc(p_context->p_data_start_, p_context->data_size_); \
+        if(!p_alloc) \
+          error(2, "[ERR] out of memory\n"); \
  \
-				pData = pAlloc + (pData - pContext->pDataStart); \
-				pContext->pDataStart = pAlloc; \
-				pDataEnd = pContext->pDataStart + pContext->DataSize; \
-				memset(pData, 0, pDataEnd - pData); \
-			} \
-		} break; \
-		case '<': \
-		{ \
-			pData--; \
-			/* Underflow not documented, therefore not implemented */ \
-		} break; \
-		case '+': \
-		{ \
-			(*pData)++; \
-		} break; \
-		case '-': \
-		{ \
-			(*pData)--; \
-		} break; \
-		case '.': \
-		{ \
-			putchar(*pData); \
-		} break; \
-		case ',': \
-		{ \
-			*pData = getchar(); \
-		} break; \
-		case '[': \
-		{ \
-			if(!*pData) \
-				Position = pJumpTable[Position] - 1; \
-		} break; \
-		case ']': \
-		{ \
-			if(*pData) \
-				Position = pJumpTable[Position] - 1; \
-		} break; \
-		default: \
-		{ \
-			pContext->Position = Position; \
-			pContext->pData = pData; \
+        p_data = p_alloc + (p_data - p_context->p_data_start_); \
+        p_context->p_data_start_ = p_alloc; \
+        p_data_end = p_context->p_data_start_ + p_context->data_size_; \
+        memset(p_data, 0, p_data_end - p_data); \
+      } \
+    } break; \
+    case '<': \
+    { \
+      p_data--; \
+      /* underflow ignored */ \
+    } break; \
+    case '+': \
+    { \
+      (*p_data)++; \
+    } break; \
+    case '-': \
+    { \
+      (*p_data)--; \
+    } break; \
+    case '.': \
+    { \
+      putchar(*p_data); \
+    } break; \
+    case ',': \
+    { \
+      *p_data = getchar(); \
+    } break; \
+    case '[': \
+    { \
+      if(!*p_data) \
+        p_program = p_program_start + p_jump_table[p_program - p_program_start] - 1; \
+    } break; \
+    case ']': \
+    { \
+      if(*p_data) \
+        p_program = p_program_start + p_jump_table[p_program - p_program_start] - 1; \
+    } break; \
+    default: \
+    { \
+      p_context->position_ = p_program - p_program_start; \
+      p_context->p_data_ = p_data; \
  \
-			return Position; \
-		} break; \
-	}
+      return p_context->position; \
+    } break; \
+  }
 
-uint32_t RunBrainfuck(CBrainfuckContext *pContext, size_t Steps)
+uint32_t runBrainfuck(CBrainfuckContext *p_context, size_t steps)
 {
-	// gcc can't into optimizing >_>
-	register uint32_t Position = pContext->Position;
-	register const char *pProgram = pContext->pProgram;
-	register unsigned char *pData = pContext->pData;
-	register unsigned char *pDataEnd = pContext->pDataStart + pContext->DataSize;
-	register uint32_t *pJumpTable = pContext->pJumpTable;
+  // gcc can't into optimizing >_>
+  register const char *p_program_start = p_context->p_program_;
+  register const char *p_program = p_context->p_program_ + p_context->position_;
+  register unsigned char *p_data = p_context->p_data_;
+  register unsigned char *p_data_end = p_context->p_data_start_ + p_context->data_size_;
+  register uint32_t *p_jump_table = p_context->p_jump_table_;
 
-	if(!Steps)
-	{
-		for(;; Position++)
-		{
-			MACRO_RUN_BRAINFUCK_FUNC()
-		}
-	}
-	else
-	{
-		for(; Steps--; Position++)
-		{
-			MACRO_RUN_BRAINFUCK_FUNC()
-		}
-		pContext->Position = Position;
-		pContext->pData = pData;
+  if(!steps)
+  {
+    for(;; p_program++)
+    {
+      MACRO_RUN_BRAINFUCK_FUNC()
+    }
+  }
+  else
+  {
+    for(; steps--; p_program++)
+    {
+      MACRO_RUN_BRAINFUCK_FUNC()
+    }
+    p_context->position_ = p_program - p_program_start;
+    p_context->p_data_ = p_data;
 
-		return UINT32_MAX;
-	}
+    return UINT32_MAX;
+  }
 }
 
 int main(int argc, char *argv[])
 {
-	// Interactive mode
-	if(argc == 1)
-	{
-		// Init error func to interactive mode
-		error(1, 0);
+  // Interactive mode
+  if(argc == 1)
+  {
+    // Init error func to interactive mode
+    error(1, 0);
 
-		CCommand aCommands[] =
-		{
-			{"load", CMD_load},
-			{"run", CMD_run},
-			{"eval", CMD_eval},
-			{"break", CMD_break},
-			{"step", CMD_step},
-			{"memory", CMD_memory},
-			{"show", CMD_show},
-			{"change", CMD_change},
-			{"quit", CMD_quit},
-			{0, 0}
-		};
+    CCommand a_commands[] =
+    {
+      {"load",   cmdLoad},
+      {"run",    cmdRun},
+      {"eval",   cmdEval},
+      {"break",  cmdBreak},
+      {"step",   cmdStep},
+      {"memory", cmdMemory},
+      {"show",   cmdShow},
+      {"change", cmdChange},
+      {"quit",   cmdQuit},
+      {0,        0}
+    };
 
-		CBrainfuckContext Context;
-		BrainfuckContext_Init(&Context, 0, 0);
+    CBrainfuckContext context;
+    brainfuckContextInit(&context, 0, 0);
 
-		while(1)
-		{
-			printf("esp> ");
-			char aBuf[PATH_MAX + 16];
-			size_t Length;
+    while(1)
+    {
+      printf("esp> ");
+      char a_buf[PATH_MAX + 16];
+      size_t length;
 
-			if(fgets(aBuf, sizeof(aBuf), stdin) == 0) // EOF
-				CMD_quit(&Context, 0, 0);
+      if(fgets(a_buf, sizeof(a_buf), stdin) == 0) // EOF
+        cmdQuit(&context, 0, 0);
 
-			Length = strlen(aBuf) - 1;
-			aBuf[Length] = 0; // Eat trailing '\n'
+      length = strlen(a_buf) - 1;
+      a_buf[length] = 0; // Eat trailing '\n'
 
-			CommandLine(&Context, &aCommands[0], aBuf);
-		}
-	}
-	// Execution mode
-	else if(argc >= 3)
-	{
-		// Init error func to execution mode
-		error(0, 0);
+      commandLine(&context, &a_commands[0], a_buf);
+    }
+  }
+  // Execution mode
+  else if(argc >= 3)
+  {
+    // Init error func to execution mode
+    error(0, 0);
 
-		if(strcmp(argv[1], "-e"))
-			error(1, "[ERR] usage: ./assa [-e brainfuck_filnename]\n");
+    if(strcmp(argv[1], "-e"))
+      error(1, "[ERR] usage: ./assa [-e brainfuck_filnename]\n");
 
-		char *pProgram;
-		size_t ProgramSize;
-		ProgramSize = LoadProgram(argv[2], &pProgram);
+    char *p_program;
+    size_t program_size;
+    program_size = loadProgram(argv[2], &p_program);
 
 #ifdef BONUS
-		size_t DataAllocSize = MEMPAGESIZE + MEMPAGESIZE;
-		unsigned char *pData = mmap(0, DataAllocSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-		if(pData == MAP_FAILED)
-			error(2, "[ERR] out of memory\n");
-		unsigned char *pDataStart = pData;
+    size_t data_alloc_size = MEMPAGESIZE + MEMPAGESIZE;
+    unsigned char *p_data = mmap(0, data_alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if(p_data == MAP_FAILED)
+      error(2, "[ERR] out of memory\n");
+    unsigned char *p_data_start = p_data;
 
-		// Set up memory trap
-		mprotect(pData + (DataAllocSize - MEMPAGESIZE), MEMPAGESIZE, PROT_NONE);
+    // Set up memory trap
+    mprotect(p_data + (data_alloc_size - MEMPAGESIZE), MEMPAGESIZE, PROT_NONE);
 
-		// install SIGSEGV trap
-		// this is used to detect invalid memory access
-		struct sigaction SigAction;
-		memset(&SigAction, 0, sizeof(SigAction));
-		sigemptyset(&SigAction.sa_mask);
-		SigAction.sa_sigaction = SIGSEGV_Handler;
-		SigAction.sa_flags = SA_SIGINFO;
-		sigaction(SIGSEGV, &SigAction, NULL);
+    // install SIGSEGV trap
+    // this is used to detect invalid memory access
+    struct sigaction sig_action;
+    memset(&sig_action, 0, sizeof(sig_action));
+    sigemptyset(&sig_action.sa_mask);
+    sig_action.sa_sigaction = sigsegvHandler;
+    sig_action.sa_flags = SA_SIGINFO;
+    sigaction(SIGSEGV, &sig_action, NULL);
 
-		// Hack to avoid global vars
-		SIGSEGV_Handler(-1, (void *)&pDataStart, (void *)&DataAllocSize);
+    // Hack to avoid global vars
+    sigsegvHandler(-1, (void *)&p_data_start, (void *)&data_alloc_size);
 
-		size_t BinaryAllocSize;
-		unsigned char *pBinary;
-		pBinary = JITCompileBrainfuck(pProgram, ProgramSize, &BinaryAllocSize);
+    size_t binary_alloc_size;
+    unsigned char *p_binary;
+    p_binary = jitCompileBrainfuck(p_program, program_size, &binary_alloc_size);
 
-		free(pProgram);
+    free(p_program);
 
-		int Ret;
-		// mov  edx, [ebp+pData]
-		// ^ intel syntax
-		// v gas syntax
-		asm("mov %[pData], %%edx"
-				:: [pData] "m" (pData) : "edx");
+    int ret;
+    // mov  edx, [ebp+p_data]
+    // ^ intel syntax
+    // v gas syntax
+    asm("mov %[p_data], %%edx"
+        :: [p_data] "m" (p_data) : "edx");
 
-		Ret = ((int(*)())pBinary)();
+    ret = ((int(*)())p_binary)();
 
-		// mov  [ebp+pData], edx ; Fix data pointer
-		// ^ intel syntax
-		// v gas syntax
-		asm("mov %%edx, %[pData]"
-				: [pData] "=r" (pData) :: "edx");
+    // mov  [ebp+p_data], edx ; Fix data pointer
+    // ^ intel syntax
+    // v gas syntax
+    asm("mov %%edx, %[p_data]"
+        : [p_data] "=r" (p_data) :: "edx");
 
-		// supress unused variable
-		(void)Ret;
+    // supress unused variable
+    (void)ret;
 
-		munmap(pDataStart, DataAllocSize);
-		munmap(pBinary, BinaryAllocSize);
+    munmap(p_data_start, data_alloc_size);
+    munmap(p_binary, binary_alloc_size);
 #else
-		uint32_t *pJumpTable;
-		BuildJumpTable(pProgram, ProgramSize, &pJumpTable);
+    uint32_t *p_jump_table;
+    buildJumpTable(p_program, program_size, &p_jump_table);
 
-		CBrainfuckContext Context;
-		BrainfuckContext_Init(&Context, pProgram, pJumpTable);
-		BrainfuckContext_InitData(&Context);
+    CBrainfuckContext context;
+    brainfuckContextInit(&context, p_program, p_jump_table);
+    brainfuckContextInitData(&context);
 
-		RunBrainfuck(&Context, 0);
+    runBrainfuck(&context, 0);
 
-		free(pProgram);
-		free(Context.pDataStart);
-		free(pJumpTable);
+    free(p_program);
+    free(context.p_data_start_);
+    free(p_jump_table);
 #endif
-	}
-	else
-		error(1, "[ERR] usage: ./assa [-e brainfuck_filnename]\n");
+  }
+  else
+    error(1, "[ERR] usage: ./assa [-e brainfuck_filnename]\n");
 
-	return 0;
+  return 0;
 }
