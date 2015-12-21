@@ -794,7 +794,7 @@ int CMD_show(CBrainfuckContext *pContext, int argc, char *argv[])
 	}
 
 	// Print <Size> amount of characters
-	printf("%.*s\n", Size, &pContext->pProgram[pContext->Position]);
+	printf("%.*s\n", (int)Size, &pContext->pProgram[pContext->Position]);
 
 	// Restore breakpoints again
 	for(i = 0; i < pContext->BreakPointsSize; i++)
@@ -1472,7 +1472,7 @@ int main(int argc, char *argv[])
 		asm("mov %%edx, %[pData]"
 				: [pData] "=r" (pData) :: "edx");
 
-		// supress unused variable
+		// suppress unused variable
 		(void)Ret;
 
 		munmap(pDataStart, DataAllocSize);
