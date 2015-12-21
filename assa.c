@@ -149,6 +149,18 @@ int commandLine(CBrainfuckContext *p_context, CCommand *p_command, char *p_line)
 
 //-----------------------------------------------------------------------------
 ///
+/// Filters junk out of brainfuck code.
+///
+/// @param p_data The string containing brainfuck code.
+/// @param size Size of p_data.
+/// @param pp_program Pointer to string which will hold the filtered code.
+///
+/// @return Size of pp_program.
+//
+size_t filterProgram(const char *p_data, size_t size, char **pp_program);
+
+//-----------------------------------------------------------------------------
+///
 /// Loads a file into memory and filters invalid characters from it.
 ///
 /// @param p_filename Path of the file.
@@ -563,8 +575,7 @@ int cmdEval(CBrainfuckContext *p_context, int argc, char **argv)
   memcpy(&old_context, p_context, sizeof(CBrainfuckContext));
 
   // load new program
-  p_context->p_program_ = argv[1];
-  p_context->program_size_ = strlen(argv[1]);
+  p_context->program_size_ = filterProgram(argv[1], strlen(argv[1]), &p_context->p_program_);
   p_context->position_ = 0;
   p_context->p_jump_table_ = 0;
 
@@ -572,6 +583,7 @@ int cmdEval(CBrainfuckContext *p_context, int argc, char **argv)
   runBrainfuck(p_context, 0);
 
   // Clean up
+  free(p_context->p_program_);
   free(p_context->p_jump_table_);
 
   // Keep data pointer position?
@@ -908,6 +920,62 @@ int commandLine(CBrainfuckContext *p_context, CCommand *p_command, char *p_line)
 }
 /* Console */
 
+size_t filterProgram(const char *p_data, size_t size, char **pp_program)
+{
+  // Count valid brainfuck characters
+  size_t real_length = 0;
+  size_t i;
+  for(i = 0; i < size; i++)
+  {
+    switch(p_data[i])
+    {
+      case '>':
+      case '<':
+      case '+':
+      case '-':
+      case '.':
+      case ',':
+      case '[':
+      case ']':
+      {
+        real_length++;
+      } break;
+    }
+  }
+
+  // Allocate memory for the filtered code
+  char *p_program = malloc(real_length + 1);
+  if(!p_program)
+    error(2, "[ERR] out of memory\n");
+
+  // And copy only the valid characters
+  size_t j;
+  for(i = 0, j = 0; i < size; i++)
+  {
+    switch(p_data[i])
+    {
+      case '>':
+      case '<':
+      case '+':
+      case '-':
+      case '.':
+      case ',':
+      case '[':
+      case ']':
+      {
+        p_program[j++] = p_data[i];
+      } break;
+    }
+  }
+
+  // Assure null-termination
+  p_program[real_length] = 0;
+
+  *pp_program = p_program;
+
+  return real_length;
+}
+
 size_t loadProgram(const char *p_filename, char **pp_program)
 {
   char *p_file_data;
@@ -934,58 +1002,9 @@ size_t loadProgram(const char *p_filename, char **pp_program)
   // Assure null-termination
   p_file_data[file_size] = 0;
 
-  // Count valid brainfuck characters
-  size_t real_length = 0;
-  size_t i;
-  for(i = 0; i < file_size; i++)
-  {
-    switch(p_file_data[i])
-    {
-      case '>':
-      case '<':
-      case '+':
-      case '-':
-      case '.':
-      case ',':
-      case '[':
-      case ']':
-      {
-        real_length++;
-      } break;
-    }
-  }
-
-  // Allocate memory for the filtered code
-  char *p_program = malloc(real_length + 1);
-  if(!p_program)
-    error(2, "[ERR] out of memory\n");
-
-  // And copy only the valid characters
-  size_t j;
-  for(i = 0, j = 0; i < file_size; i++)
-  {
-    switch(p_file_data[i])
-    {
-      case '>':
-      case '<':
-      case '+':
-      case '-':
-      case '.':
-      case ',':
-      case '[':
-      case ']':
-      {
-        p_program[j++] = p_file_data[i];
-      } break;
-    }
-  }
-
-  // Assure null-termination
-  p_program[real_length] = 0;
+  size_t real_length = filterProgram(p_file_data, file_size, pp_program);
 
   free(p_file_data);
-
-  *pp_program = p_program;
 
   return real_length;
 }

@@ -150,6 +150,18 @@ int CommandLine(CBrainfuckContext *pContext, CCommand *pCommand, char *pLine);
 
 //-----------------------------------------------------------------------------
 ///
+/// Filters junk out of brainfuck code.
+///
+/// @param pData The string containing brainfuck code.
+/// @param size Size of pData.
+/// @param ppProgram Pointer to string which will hold the filtered code.
+///
+/// @return Size of ppProgram.
+//
+size_t FilterProgram(const char *pData, size_t Size, char **ppProgram);
+
+//-----------------------------------------------------------------------------
+///
 /// Loads a file into memory and filters invalid characters from it.
 ///
 /// @param pFilename Path of the file.
@@ -564,8 +576,7 @@ int CMD_eval(CBrainfuckContext *pContext, int argc, char *argv[])
 	memcpy(&OldContext, pContext, sizeof(CBrainfuckContext));
 
 	// load new program
-	pContext->pProgram = argv[1];
-	pContext->ProgramSize = strlen(argv[1]);
+	pContext->ProgramSize = FilterProgram(argv[1], strlen(argv[1]), &pContext->pProgram);
 	pContext->Position = 0;
 	pContext->pJumpTable = 0;
 
@@ -573,6 +584,7 @@ int CMD_eval(CBrainfuckContext *pContext, int argc, char *argv[])
 	RunBrainfuck(pContext, 0);
 
 	// Clean up
+	free(pContext->pProgram);
 	free(pContext->pJumpTable);
 
 	// Keep data pointer position?
@@ -669,6 +681,9 @@ int CMD_step(CBrainfuckContext *pContext, int argc, char *argv[])
 		long int Temp = strtol(argv[1], 0, 10);
 		if(Temp <= 0)
 			return 1;
+
+		if(Temp >= pContext->ProgramSize)
+			return CMD_run(pContext, 0, 0);
 
 		Steps = Temp;
 	}
@@ -906,6 +921,62 @@ int CommandLine(CBrainfuckContext *pContext, CCommand *pCommand, char *pLine)
 }
 /* Console */
 
+size_t FilterProgram(const char *pData, size_t Size, char **ppProgram)
+{
+	// Count valid brainfuck characters
+	size_t RealLength = 0;
+	size_t i;
+	for(i = 0; i < Size; i++)
+	{
+		switch(pData[i])
+		{
+			case '>':
+			case '<':
+			case '+':
+			case '-':
+			case '.':
+			case ',':
+			case '[':
+			case ']':
+			{
+				RealLength++;
+			} break;
+		}
+	}
+
+	// Allocate memory for the filtered code
+	char *pProgram = malloc(RealLength + 1);
+	if(!pProgram)
+		error(2, "[ERR] out of memory\n");
+
+	// And copy only the valid characters
+	size_t j;
+	for(i = 0, j = 0; i < Size; i++)
+	{
+		switch(pData[i])
+		{
+			case '>':
+			case '<':
+			case '+':
+			case '-':
+			case '.':
+			case ',':
+			case '[':
+			case ']':
+			{
+				pProgram[j++] = pData[i];
+			} break;
+		}
+	}
+
+	// Assure null-termination
+	pProgram[RealLength] = 0;
+
+	*ppProgram = pProgram;
+
+	return RealLength;
+}
+
 size_t LoadProgram(const char *pFilename, char **ppProgram)
 {
 	char *pFileData;
@@ -932,58 +1003,9 @@ size_t LoadProgram(const char *pFilename, char **ppProgram)
 	// Assure null-termination
 	pFileData[FileSize] = 0;
 
-	// Count valid brainfuck characters
-	size_t RealLength = 0;
-	size_t i;
-	for(i = 0; i < FileSize; i++)
-	{
-		switch(pFileData[i])
-		{
-			case '>':
-			case '<':
-			case '+':
-			case '-':
-			case '.':
-			case ',':
-			case '[':
-			case ']':
-			{
-				RealLength++;
-			} break;
-		}
-	}
-
-	// Allocate memory for the filtered code
-	char *pProgram = malloc(RealLength + 1);
-	if(!pProgram)
-		error(2, "[ERR] out of memory\n");
-
-	// And copy only the valid characters
-	size_t j;
-	for(i = 0, j = 0; i < FileSize; i++)
-	{
-		switch(pFileData[i])
-		{
-			case '>':
-			case '<':
-			case '+':
-			case '-':
-			case '.':
-			case ',':
-			case '[':
-			case ']':
-			{
-				pProgram[j++] = pFileData[i];
-			} break;
-		}
-	}
-
-	// Assure null-termination
-	pProgram[RealLength] = 0;
+	size_t RealLength = FilterProgram(pFileData, FileSize, ppProgram);
 
 	free(pFileData);
-
-	*ppProgram = pProgram;
 
 	return RealLength;
 }
