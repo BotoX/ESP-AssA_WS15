@@ -353,14 +353,14 @@ void Stack_Alloc(CStack *pStack, size_t Size)
 	if(pStack->AllocSize == 0)
 	{
 		pStack->AllocSize = Size;
-		pStack->pData = malloc(pStack->AllocSize * sizeof(size_t));
+		pStack->pData = malloc(pStack->AllocSize * sizeof(uint32_t));
 		if(!pStack->pData)
 			error(2, "[ERR] out of memory\n");
 	}
 	else
 	{
 		pStack->AllocSize += Size;
-		void *pAlloc = realloc(pStack->pData, pStack->AllocSize * sizeof(size_t));
+		void *pAlloc = realloc(pStack->pData, pStack->AllocSize * sizeof(uint32_t));
 		if(!pStack->pData)
 		{
 			free(pStack->pData);
@@ -1515,7 +1515,10 @@ int main(int argc, char *argv[])
 #endif
 	}
 	else
+	{
+		error(0, 0);
 		error(1, "[ERR] usage: ./assa [-e brainfuck_filnename]\n");
+	}
 
 	return 0;
 }
