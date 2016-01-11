@@ -580,8 +580,8 @@ int CMD_eval(CBrainfuckContext *pContext, int argc, char *argv[])
 	pContext->Position = 0;
 	pContext->pJumpTable = 0;
 
-	BuildJumpTable(pContext->pProgram, pContext->ProgramSize, &pContext->pJumpTable);
-	RunBrainfuck(pContext, 0);
+	if(!BuildJumpTable(pContext->pProgram, pContext->ProgramSize, &pContext->pJumpTable))
+		RunBrainfuck(pContext, 0);
 
 	// Clean up
 	free(pContext->pProgram);
@@ -1288,8 +1288,13 @@ int BuildJumpTable(char *pBuf, size_t Length, uint32_t **ppJumpTable)
 			case ']':
 			{
 				uint32_t Jump = Stack_Pop(pStack);
+				if(Jump == UINT32_MAX)
+				{
+					error(3, "[ERR] parsing of input failed\n");
+					return 1;
+				}
 
-				// '[' jumps to previously push'd ']' position
+				// ']' jumps to previously push'd '[' position
 				pJumpTable[i] = Jump;
 				// previously push'd '[' jumps to this ']'
 				pJumpTable[Jump] = i;
