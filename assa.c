@@ -462,9 +462,9 @@ int cmdRun(CBrainfuckContext *p_context, int argc, char **argv)
     return 1;
   }
 
-  size_t steps = 0;
+  uint32_t steps = 0;
   if(argc == -1)
-    steps = *((size_t *)argv);
+    steps = *((uint32_t *)argv);
 
   if(!p_context->p_data_)
     brainfuckContextInitData(p_context);
@@ -847,6 +847,88 @@ int cmdChange(CBrainfuckContext *p_context, int argc, char **argv)
   unsigned char *p_data = p_context->p_data_start_ + position;
 
   *p_data = value;
+
+  return 0;
+}
+
+int cmdExport(CBrainfuckContext *p_context, int argc, char **argv)
+{
+  if(argc < 2)
+  {
+    printf("[ERR] wrong parameter count\n");
+    return 1;
+  }
+
+  if(!p_context->p_program_)
+  {
+    printf("[ERR] no program loaded\n");
+    return 1;
+  }
+
+  FILE *p_file;
+  p_file = fopen(argv[1], "w");
+  if(!p_file)
+  {
+    error(4, "[ERR] reading the file failed\n");
+    return 0;
+  }
+
+  const char *p_header = "\
+#include <stdio.h>\n\
+int main() {\n\
+  unsigned char data[1024];\n\
+  unsigned char* ptr = data;\n\
+  int i;\n\
+  for(i = 0; i < sizeof(data); i++)\n\
+    data[i] = 0;\n\
+\n";
+
+  fwrite(p_header, sizeof(char), strlen(p_header), p_file);
+
+  char *p_program = p_context->p_program_;
+  size_t program_size = p_context->program_size_;
+  size_t i;
+  for(i = 0; i < program_size; i++)
+  {
+    switch(p_program[i])
+    {
+      case '>':
+      {
+        fwrite(" ptr++;\n", sizeof(char), strlen(" ptr++;\n"), p_file);
+      } break;
+      case '<':
+      {
+        fwrite(" ptr--;\n", sizeof(char), strlen(" ptr--;\n"), p_file);
+      } break;
+      case '+':
+      {
+        fwrite(" (*ptr)++;\n", sizeof(char), strlen(" (*ptr)++;\n"), p_file);
+      } break;
+      case '-':
+      {
+        fwrite(" (*ptr)--;\n", sizeof(char), strlen(" (*ptr)--;\n"), p_file);
+      } break;
+      case '.':
+      {
+        fwrite(" putchar(*ptr);\n", sizeof(char), strlen(" putchar(*ptr);\n"), p_file);
+      } break;
+      case ',':
+      {
+        fwrite(" *ptr = getchar();\n", sizeof(char), strlen(" *ptr = getchar();\n"), p_file);
+      } break;
+      case '[':
+      {
+        fwrite("  while(*ptr) {\n", sizeof(char), strlen("  while(*ptr) {\n"), p_file);
+      } break;
+      case ']':
+      {
+        fwrite("  }\n", sizeof(char), strlen("  }\n"), p_file);
+      } break;
+    }
+  }
+
+  fwrite("\n  return 0;\n  }\n", sizeof(char), strlen("\n  return 0;\n  }\n"), p_file);
+  fclose(p_file);
 
   return 0;
 }
@@ -1421,6 +1503,7 @@ int main(int argc, char *argv[])
       {"show",   cmdShow},
       {"change", cmdChange},
       {"quit",   cmdQuit},
+      {"export", cmdExport},
       {0,        0}
     };
 

@@ -463,9 +463,9 @@ int CMD_run(CBrainfuckContext *pContext, int argc, char *argv[])
 		return 1;
 	}
 
-	size_t Steps = 0;
+	uint32_t Steps = 0;
 	if(argc == -1)
-		Steps = *((size_t *)argv);
+		Steps = *((uint32_t *)argv);
 
 	if(!pContext->pData)
 		BrainfuckContext_InitData(pContext);
